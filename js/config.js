@@ -1,7 +1,6 @@
-/* ONLINE DATABASE - currently DISCONNECTED (the site works with browser storage only).
-   To connect later, fill the 3 values below (see README.txt, section "SHARED DATABASE (Firebase)"). */
+/* ONLINE DATABASE (Firebase) - connected. Products, orders and customer accounts are shared by all devices. */
 window.TK_CLOUD = {
-  databaseURL: '',
-  apiKey: '',
-  adminEmail: ''   // must be EXACTLY the e-mail of the user in Firebase > Authentication > Users
+  databaseURL: 'https://mehdi-ce572-default-rtdb.firebaseio.com',
+  apiKey: 'AIzaSyAhThpYx15hZ7NhQkBGVyZ-M6oZed7FdH0',
+  adminEmail: 'mehdi2dadaszade@gmail.com'   // must be EXACTLY the e-mail of the user in Firebase > Authentication > Users
 };
