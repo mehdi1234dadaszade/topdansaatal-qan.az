@@ -1,6 +1,14 @@
 /* Data + storage. Order of loading: browser storage (admin edits) -> store.json -> built-in seed */
 const ROOT = new URL('../', document.currentScript.src).href;
-const LANGS=[['en','English'],['az','Azərbaycan dili'],['ru','Русский'],['tr','Türkçe']];
+const LANGS=[['az','Azərbaycan dili']];
+/* TOPDAN (wholesale) site: the pages in /topdan/ have data-site="w". It has its own products, albums, basket and discounts. */
+const WS=!!(document.body&&document.body.dataset.site==='w');
+const CK=k=>(WS?'tkw_':'tk_')+k;              /* basket / saved / promo / whatsapp keys are separate for the two sites */
+const tkHash=s=>{s=String(s);let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0,c;i<s.length;i++){c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
+const WS_DEF='17oxbzg23lu';                    /* hash of the default topdan password (the password itself is not stored in the code) */
+let RED=WS;
+const AC=()=>RED?'#f87171':'#a78bfa';           /* accent colour of the drawn watch pictures */
 const SEED_ALBUMS = [
   {key:'men',name:{en:'Men',az:'Kişi saatları',ru:'Мужские часы',tr:'Erkek saatleri'}},
   {key:'women',name:{en:'Women',az:'Qadın saatları',ru:'Женские часы',tr:'Kadın saatleri'}},
@@ -40,8 +48,8 @@ function shape(k,c){
   const strap=`<rect x="84" y="14" width="32" height="172" rx="12" fill="${S}"/><rect x="84" y="14" width="10" height="172" rx="8" fill="#fff" opacity=".07"/>`;
   const crown=`<rect x="143" y="94" width="9" height="12" rx="3" fill="${c}"/>`;
   return {
-   watch:`${strap}${crown}<circle cx="100" cy="100" r="46" fill="${c}"/><circle cx="100" cy="100" r="46" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><circle cx="100" cy="100" r="39" fill="#0b0a14"/>${tick}<line x1="100" y1="100" x2="100" y2="76" stroke="#fff" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="100" x2="118" y2="108" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><line x1="100" y1="100" x2="86" y2="120" stroke="#a78bfa" stroke-width="1.2"/><circle cx="100" cy="100" r="3" fill="#a78bfa"/>`,
-   chrono:`${strap}${crown}<rect x="143" y="72" width="8" height="9" rx="2" fill="${c}"/><rect x="143" y="119" width="8" height="9" rx="2" fill="${c}"/><circle cx="100" cy="100" r="48" fill="${c}"/><circle cx="100" cy="100" r="40" fill="#0b0a14"/>${tick}<circle cx="100" cy="84" r="9" fill="none" stroke="#a78bfa" stroke-width="1.2"/><circle cx="84" cy="104" r="9" fill="none" stroke="#a78bfa" stroke-width="1.2"/><circle cx="116" cy="104" r="9" fill="none" stroke="#a78bfa" stroke-width="1.2"/><line x1="100" y1="100" x2="100" y2="68" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><line x1="100" y1="100" x2="120" y2="112" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="100" cy="100" r="2.6" fill="#fff"/>`,
+   watch:`${strap}${crown}<circle cx="100" cy="100" r="46" fill="${c}"/><circle cx="100" cy="100" r="46" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2"/><circle cx="100" cy="100" r="39" fill="#0b0a14"/>${tick}<line x1="100" y1="100" x2="100" y2="76" stroke="#fff" stroke-width="3" stroke-linecap="round"/><line x1="100" y1="100" x2="118" y2="108" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><line x1="100" y1="100" x2="86" y2="120" stroke="${AC()}" stroke-width="1.2"/><circle cx="100" cy="100" r="3" fill="${AC()}"/>`,
+   chrono:`${strap}${crown}<rect x="143" y="72" width="8" height="9" rx="2" fill="${c}"/><rect x="143" y="119" width="8" height="9" rx="2" fill="${c}"/><circle cx="100" cy="100" r="48" fill="${c}"/><circle cx="100" cy="100" r="40" fill="#0b0a14"/>${tick}<circle cx="100" cy="84" r="9" fill="none" stroke="${AC()}" stroke-width="1.2"/><circle cx="84" cy="104" r="9" fill="none" stroke="${AC()}" stroke-width="1.2"/><circle cx="116" cy="104" r="9" fill="none" stroke="${AC()}" stroke-width="1.2"/><line x1="100" y1="100" x2="100" y2="68" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><line x1="100" y1="100" x2="120" y2="112" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="100" cy="100" r="2.6" fill="#fff"/>`,
    dress:`<rect x="88" y="14" width="24" height="172" rx="10" fill="${S}"/>${crown}<circle cx="100" cy="100" r="40" fill="${c}"/><circle cx="100" cy="100" r="34" fill="#f1eee6"/><text x="100" y="82" font-size="6" text-anchor="middle" fill="#555" font-family="Georgia">12</text><text x="100" y="124" font-size="6" text-anchor="middle" fill="#555" font-family="Georgia">6</text><text x="123" y="102" font-size="6" text-anchor="middle" fill="#555" font-family="Georgia">3</text><text x="77" y="102" font-size="6" text-anchor="middle" fill="#555" font-family="Georgia">9</text><line x1="100" y1="100" x2="100" y2="78" stroke="#222" stroke-width="2" stroke-linecap="round"/><line x1="100" y1="100" x2="114" y2="106" stroke="#222" stroke-width="1.6" stroke-linecap="round"/><circle cx="100" cy="100" r="2" fill="#222"/>`,
    smart:`<rect x="80" y="12" width="40" height="176" rx="14" fill="${S}"/><rect x="144" y="86" width="6" height="22" rx="3" fill="${c}"/><rect x="62" y="58" width="80" height="84" rx="22" fill="${c}"/><rect x="69" y="65" width="66" height="70" rx="16" fill="#05040a"/><text x="102" y="97" font-size="19" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-weight="600">10:09</text><rect x="82" y="106" width="40" height="5" rx="2.5" fill="#8b5cf6"/><rect x="88" y="116" width="28" height="4" rx="2" fill="#3b82f6" opacity=".8"/>`,
    band:`<rect x="86" y="10" width="28" height="180" rx="12" fill="${c}" opacity=".9"/><rect x="74" y="64" width="52" height="72" rx="16" fill="#15131f"/><rect x="79" y="69" width="42" height="62" rx="12" fill="#05040a"/><text x="100" y="97" font-size="13" text-anchor="middle" fill="#fff" font-family="Inter,Arial" font-weight="600">10:09</text><circle cx="100" cy="114" r="6" fill="none" stroke="#8b5cf6" stroke-width="2"/>`,
@@ -55,7 +63,8 @@ function shape(k,c){
   }[k]||`<circle cx="100" cy="100" r="40" fill="${c}"/>`;
 }
 function productImg(w){
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><radialGradient id="b" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="#3a2a78"/><stop offset=".55" stop-color="#150f2e"/><stop offset="1" stop-color="#05040a"/></radialGradient></defs>${w.bare?'':'<rect width="200" height="200" fill="url(#b)"/><ellipse cx="100" cy="184" rx="42" ry="6" fill="#000" opacity=".45"/>'}${shape(w.kind,w.color||'#8b5cf6')}</svg>`;
+  RED=WS||!!w.ws;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><defs><radialGradient id="b" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="${RED?'#6b1d24':'#3a2a78'}"/><stop offset=".55" stop-color="${RED?'#2a0a0e':'#150f2e'}"/><stop offset="1" stop-color="#05040a"/></radialGradient></defs>${w.bare?'':'<rect width="200" height="200" fill="url(#b)"/><ellipse cx="100" cy="184" rx="42" ry="6" fill="#000" opacity=".45"/>'}${shape(w.kind,w.color||'#8b5cf6')}</svg>`;
   return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
 function heroArt(){
@@ -63,7 +72,7 @@ function heroArt(){
   <g transform="translate(-40 -20) scale(2.2)">${shape('watch','#c4b5fd')}</g></svg>`;
   return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
 }
-const photo=w=>w.img||ROOT+'images/products/product-'+w.id+'.jpg';
+const photo=w=>w.img||ROOT+(w.ws?'images/topdan/product-':'images/products/product-')+w.id+'.jpg';
 const imgTag=(w,alt='')=>`<img src="${String(photo(w)).replace(/"/g,'&quot;')}" alt="${alt}" loading="lazy" onerror="this.onerror=null;this.src=this.dataset.f" data-f="${productImg({...w,img:''})}">`;
 /* Flags (inline SVG, so they show on every device) */
 const FLAGS=(()=>{
@@ -78,6 +87,8 @@ const FLAGS=(()=>{
 })();
 const flagImg=(l,h=15)=>`<img class="flag" src="${FLAGS[l]}" alt="" width="${Math.round(h*1.5)}" height="${h}">`;
 
+const PRODS=()=>WS?DB.data.wholesale.products:DB.data.products;
+const ALBS=()=>WS?DB.data.wholesale.albums:DB.data.albums;
 const CLOUD=window.TK_CLOUD||{};
 const DB = {
   data:null, auth:null, _t:null,
@@ -91,9 +102,13 @@ const DB = {
     if(d.products.some(w=>COS.includes(w.kind))){d.albums=JSON.parse(JSON.stringify(SEED_ALBUMS));d.products=makeProducts();this._migrated=true;}
     if(d.settings.name&&/wal+nut/i.test(d.settings.name)){delete d.settings.name;this._migrated=true;}
     d.products.forEach(w=>{w.tags=w.tags||[];});
+    /* TOPDAN (wholesale) goods: own albums + products, shown only on the /topdan/ pages */
+    const W=d.wholesale=d.wholesale||{};W.albums=W.albums||[];W.products=W.products||[];W.home=W.home||{};
+    W.albums.forEach(a=>{a.name=a.name||{};});W.products.forEach(w=>{w.tags=w.tags||[];w.ws=1;});
     /* store contact details (filled once; afterwards change them in Admin > Contact) */
-    if(!d.settings.contactSeeded){const C=d.settings.contact=d.settings.contact||{},D={instagram:'https://www.instagram.com/topdan_saat_',tiktok:'https://www.tiktok.com/@cdvipsaat_',facebook:'https://www.facebook.com/share/1crWY7rukA/',whatsapp:'+994501005444',address:'Sədərək Ticarət Mərkəzi, Sıra 12 Dükan 60',maps:'https://goo.gl/maps/VXDsYAnSGdWrTXEy5?g_st=aw',map:'Sədərək Ticarət Mərkəzi, Bakı'};
+    if(!d.settings.contactSeeded){const C=d.settings.contact=d.settings.contact||{},D={instagram:'https://www.instagram.com/topdan_saat_',tiktok:'https://www.tiktok.com/@cdvipsaat_',whatsapp:'+994501005444',address:'Sədərək Ticarət Mərkəzi, Sıra 12 Dükan 60',maps:'https://goo.gl/maps/VXDsYAnSGdWrTXEy5?g_st=aw',map:'Sədərək Ticarət Mərkəzi, Bakı'};
       for(const k in D)C[k]=D[k];if(!C.phone)C.phone='+994501005444';d.settings.contactSeeded=true;this._migrated=true;}
+    if(d.settings.contact)delete d.settings.contact.facebook;
     const st=d.settings; if(st.texts)delete st.texts.ur;
     const h=st.home; if(h){['title','sub'].forEach(k=>{if(h[k])delete h[k].ur;});(h.slides||[]).concat(h.gallery||[]).forEach(x=>{if(x.cap)delete x.cap.ur;});}
   },

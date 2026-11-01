@@ -336,3 +336,26 @@ body.mopen .mpanel{box-shadow:-30px 0 80px #000c;visibility:visible;transition-d
 .wabtn2{display:block;margin:10px auto 0;color:#fff}
 .btn.lock{opacity:.35;pointer-events:none}
 .wabar{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border-radius:18px;background:#0f1a14;border:1px solid #25d366;box-shadow:0 10px 40px #000a}
+
+/* ================= TOPDAN (wholesale) site: RED + BLACK ================= */
+html.wh,.wgate{--gold:#e11d2e;--gold2:#ff8f8f;--deep:#090203;--deep2:#1f0709;--hero:#c1121f;--glow2:#ff3d2e;--bg:#000000;--card:#130809;--ink:#f8f4f4;--mut:#b8a5a7;--line:#3a171b;--btn:#ffffff;--btntxt:#0b0203}
+html.wh .card:hover{border-color:#e11d2e77;box-shadow:0 24px 60px -24px #e11d2e66}
+html.wh .mpanel{background:linear-gradient(180deg,#1b0709,#090203)}
+html.wh .mlang button.on{background:#e11d2e22}
+html.wh footer{background:#090203}
+html.wh .cta{background:radial-gradient(60% 120% at 50% 130%,var(--hero),#090203 70%)}
+html.wh .vid{background:linear-gradient(180deg,#090203,var(--deep2))}
+html.wh .fab,html.wh .cdlg,html.wh .gbox{background:#130809}
+html.wh .hero.vh.novid{background:radial-gradient(70% 60% at 50% 100%,var(--hero),#000 70%)}
+.wtag{display:inline-flex;align-items:center;padding:7px 14px;border-radius:40px;background:color-mix(in srgb,var(--gold) 24%,transparent);border:1px solid color-mix(in srgb,var(--gold) 65%,transparent);color:#fff;font:600 .74rem Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+@media(max-width:720px){.wtag{display:none}}
+/* topdan password window */
+.wgate{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--ink)}
+.wgate.full{background:radial-gradient(70% 60% at 50% 100%,var(--hero),#000 70%)}
+.wbox{width:100%;max-width:400px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:32px 26px 24px;box-shadow:0 40px 100px #000c}
+.wlogo img{width:64px;height:64px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px #ffffff26,0 8px 30px -6px var(--gold)}
+.wbox h2{font-size:1.5rem;margin:14px 0 6px;padding:0}.wbox h2:after{margin-inline:auto}
+.wbox p{color:var(--mut);margin:0 0 16px}.wbox p.err{color:#ff7b7b;min-height:1.3em;margin:8px 0}
+.wbox input{display:block;width:100%;padding:14px 18px;border-radius:40px;border:1px solid #ffffff24;background:#ffffff0d;color:var(--ink);font:inherit;text-align:center;letter-spacing:.08em}
+.wbox .btn{width:100%;margin:0 0 6px;padding:14px}
+.wback{display:inline-block;margin-top:8px;background:none;border:0;color:var(--mut);font:inherit;font-size:.92rem;cursor:pointer;text-decoration:underline}

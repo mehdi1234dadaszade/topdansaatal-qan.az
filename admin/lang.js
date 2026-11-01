@@ -1,5 +1,5 @@
 /* Admin panel language: English or Azərbaycan dili. Add/edit translations here (English text = key). */
-const AL=localStorage.getItem('tk_admin_lang')==='az'?'az':'en';
+const AL='az'; /* admin panel is Azerbaijani only */
 const AZ={
 'Orders':'Sifarişlər',
 'Customers':'Müştərilər',
@@ -114,16 +114,10 @@ const AZ={
 'Search a word':'Söz axtar','Save texts':'Mətnləri saxla','Reset all texts':'Bütün mətnləri sıfırla','Remove all your text changes?':'Bütün mətn dəyişiklikləri silinsin?'
 };
 const tr=(s,v)=>{let r=(AL==='az'&&AZ[s]!==undefined)?AZ[s]:s;if(v)for(const k in v)r=r.split('{'+k+'}').join(v[k]);return r;};
-function setAL(l){localStorage.setItem('tk_admin_lang',l==='az'?'az':'en');location.reload();}
-function alPicker(){
-  const L2=[['en','English'],['az','Azərbaycan dili']],cur=L2.find(x=>x[0]===AL)||L2[0];
-  return `<div class="lp"><button class="lpb" type="button" aria-label="${tr('Language')}" onclick="this.parentNode.classList.toggle('open')">${flagImg(cur[0])}<span>${cur[1]}</span><i>▾</i></button><ul class="lpl">${L2.map(l=>`<li><button type="button" class="${l[0]===AL?'on':''}" onclick="setAL('${l[0]}')">${flagImg(l[0])}<span>${l[1]}</span></button></li>`).join('')}</ul></div>`;
-}
-document.addEventListener('click',e=>{if(!e.target.closest('.lp'))document.querySelectorAll('.lp.open').forEach(x=>x.classList.remove('open'));});
 function trStatic(){
   document.documentElement.lang=AL;
   document.querySelectorAll('[data-tr]').forEach(e=>e.textContent=tr(e.textContent.trim()));
-  document.querySelectorAll('.alang').forEach(s=>{s.innerHTML=alPicker();});
+  
 }
 
 Object.assign(AZ,{
@@ -139,6 +133,18 @@ Object.assign(AZ,{
 'Product page background':'Məhsul səhifəsinin fonu','This photo is the background of every product page. The product photo, name and details are shown on and under it.':'Bu şəkil hər məhsul səhifəsinin fonudur. Məhsulun şəkli, adı və təfərrüatları onun üstündə və altında göstərilir.',
 'Darkness over the background photo (0 to 85)':'Fon şəklinin üstündə qaranlıq (0-85)','Logo':'Loqo','Small round logo in the top bar and the footer.':'Yuxarı paneldə və footer-də kiçik dairəvi loqo.',
 'Second glow (blue)':'İkinci parıltı (mavi)','Card background':'Kart fonu','Soft text color':'Yumşaq mətn rəngi','Border lines':'Haşiyə xətləri','Button color':'Düymə rəngi','Button text color':'Düymə mətninin rəngi','Purple night':'Bənövşəyi gecə',
-'Facebook link':'Facebook linki','WhatsApp number or link':'WhatsApp nömrəsi və ya linki','YouTube channel link':'YouTube kanalının linki',
+'WhatsApp number or link':'WhatsApp nömrəsi və ya linki','YouTube channel link':'YouTube kanalının linki',
+'Admin account':'Admin hesabı',
+'Change the username and code used to log in to this admin panel.':'Bu admin panelə daxil olmaq üçün istifadə olunan istifadəçi adını və kodu dəyişin.',
+'Current code':'Hazırkı kod','New username':'Yeni istifadəçi adı',
+'New code (leave empty to keep the current one)':'Yeni kod (hazırkını saxlamaq üçün boş buraxın)',
+'Repeat the new code':'Yeni kodu təkrar yazın','Save login details':'Giriş məlumatlarını saxla',
+'After saving, use the new details the next time you log in. If you ever forget the code, reset it in Firebase > Authentication > Users.':'Saxladıqdan sonra növbəti dəfə yeni məlumatlarla daxil olun. Kodu unutsanız, Firebase > Authentication > Users bölməsindən sıfırlaya bilərsiniz.',
+'Username must be at least 3 characters.':'İstifadəçi adı ən azı 3 simvol olmalıdır.',
+'The new code must be at least 6 characters.':'Yeni kod ən azı 6 simvol olmalıdır.',
+'The two codes do not match.':'İki kod eyni deyil.','The current code is wrong.':'Hazırkı kod yanlışdır.',
+'Could not update: {e}':'Yeniləmək mümkün olmadı: {e}','Admin login updated ✓':'Admin giriş məlumatları yeniləndi ✓',
+'Black leather':'Qara dəri','Japan':'Yaponiya','40 mm':'40 mm','Street, building, city':'Küçə, bina, şəhər',
 'watch':'Saat','chrono':'Xronoqraf','dress':'Klassik saat','smart':'Ağıllı saat','band':'Bilərzik'
 });
+Object.assign(AZ,{'Wholesale goods':'Topdan mallar'});

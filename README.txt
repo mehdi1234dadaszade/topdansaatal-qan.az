@@ -1,3 +1,29 @@
+NOTE (v11): TOPDAN (wholesale) CUSTOMERS PAGE + red/black design.
+  1. Home page: the button "Saatlara bax" is replaced by "Topdan müştərilər üçün". Pressing it asks for a PASSWORD; after the right password the customer
+     opens the topdan pages (folder /topdan/: index, albums, products, product, cart, contact, account). The default password is given to you in the chat
+     (it is NOT written here, because README.txt is public on GitHub Pages). Change it any time: Admin > "Topdan mallar" > "Topdan səhifəsinə giriş parolu".
+     The button "Albomlara bax" now says "Premium modelləri gör" (it still opens the Albums page).
+  2. The topdan pages are RED + BLACK. They have everything the main site has: albums, search, sorting, product page, basket, orders (sent to your WhatsApp,
+     marked "TOPDAN" in the message and in Admin > Orders), customer account (same phone-number account as the main site), discounts and promo codes.
+     The basket of the main site and the basket of the topdan site are separate.
+  3. Admin > "Topdan mallar": add topdan products (price = topdan price), topdan albums with cover photos, choose the watches shown on the topdan home page,
+     change the topdan title/text and the access password. Goods added here are shown ONLY on the topdan pages.
+     Admin > Discounts: choose at the top whether the discount is for the main site or for the topdan site.
+     Photo files for topdan products: images/topdan/product-ID.jpg (or upload in the admin).
+  4. The top bar of the home page no longer shows the account / login buttons (they are still in the Menu and on the other pages).
+  5. The topdan password is checked inside the browser: it keeps casual visitors out but it is not real security (the topdan data is stored in the same public
+     online database). Topdan orders are saved in the same place as normal orders, so the Firebase rules from the steps below need no change.
+  IMPORTANT: README.txt contains your admin code and is public if you upload it to GitHub. Do not upload README.txt (keep it only on your computer).
+
+NOTE (v10): CUSTOMER SIGN UP has NO password now: phone number + name + address only. A registered customer stays logged in on that device for good
+  (there is no log-out button). From the basket, a new customer signs up on the page whose button says "Sifarişə davam et"; pressing it saves the order
+  and opens the admin's WhatsApp chat with the basket inside. Registered customers press "Sifarişi tamamla" and go straight to WhatsApp.
+  Old customers who registered earlier WITH a password cannot log in again with only the phone number - delete that user in Firebase > Authentication > Users.
+ADMIN LOGIN: Admin > "Admin hesabı" tab changes the admin username and code (default: admin / cosqun1998). With the online database the code is the
+  Firebase password of the admin e-mail, so it is changed there too. If you forget it, reset the password in Firebase > Authentication > Users.
+
+NOTE: the whole website and the admin panel are now in Azerbaijani only (no language switcher). There is no Facebook button or link anywhere.
+
 topdansaatalışqan.az - watch store website
 
 === NEW IN THIS VERSION: WATCH STORE, DARK DESIGN, VIDEO HOME PAGE ===
@@ -9,14 +35,14 @@ topdansaatalışqan.az - watch store website
      table, basket button and related watches are under it.
   4. Store name is topdansaatalışqan.az. The 30 sample products are now sample WATCHES (men, women, smart, sport, luxury, budget).
   5. Admin (same as before) got a new tab "Design": home video file/link (or YouTube link as background), poster photo, darkness over the video,
-     product page background photo, logo. Admin > Colors has more colours (buttons, cards, glow). Admin > Contact has Facebook, WhatsApp, YouTube.
+     product page background photo, logo. Admin > Colors has more colours (buttons, cards, glow). Admin > Contact has WhatsApp, YouTube.
   6. Nothing was removed: basket, orders, accounts, discounts, 4 languages, albums, search, gallery, slider (Design > "Classic" style) all remain.
   IF YOUR SITE ALREADY HAS ONLINE DATA (Firebase / store.json) with the old cosmetics products or the old store name:
      Admin > Data > "Reset to the 30 sample products" (loads the watches), then Admin > Contact > Store name (clear it or type the new name) > Save.
   AUTO-FIX: if the site finds old makeup/cosmetics data (in the browser or online), it shows the watch albums + 30 sample watches
      automatically. Open /admin/ once and log in so the fix is saved online for everybody.
-  CONTACT: Instagram, TikTok, Facebook, WhatsApp (+994501005444), address and Google Maps link are pre-filled (once). Change them any time in Admin > Contact.
-     The home page social row shows Instagram, TikTok, Facebook, WhatsApp and Google Maps (the YouTube button only appears if you add a YouTube link).
+  CONTACT: Instagram, TikTok, WhatsApp (+994501005444), address and Google Maps link are pre-filled (once). Change them any time in Admin > Contact.
+     The home page social row shows Instagram, TikTok, WhatsApp and Google Maps (the YouTube button only appears if you add a YouTube link).
   WHATSAPP AFTER ORDER: when a customer finishes an order, the confirmation page asks him to send the order to the store WhatsApp
      (number from Admin > Contact > WhatsApp). The message has the product names, quantities, prices and a photo/product link.
      On phones a second button shares the real product photos (the customer picks your WhatsApp chat). Until he presses the button,
