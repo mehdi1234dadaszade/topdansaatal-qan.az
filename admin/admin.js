@@ -24,6 +24,8 @@ async function start(){
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','z','o','u','q','h','a','s','c','k','x','d','g'].forEach(k=>$('#tab-'+k).hidden=k!==b.dataset.t);if(b.dataset.t==='o')renderO();if(b.dataset.t==='u')renderU();});
+  const om=/^#order=(\d+)_([0-9a-z]+)$/i.exec(location.hash);
+  if(om){oOpen={k:om[1],id:om[2].toLowerCase()};document.querySelector('.tabs button[data-t="o"]').click();}
 }
 trStatic();
 if(sessionStorage.getItem('tk_admin'))start();
@@ -208,7 +210,7 @@ function saveX(){const o={};LANGS.forEach(l=>o[l[0]]={});document.querySelectorA
 
 /* ---------- orders, customers, discounts ---------- */
 const STS=['new','confirmed','delivered','cancelled'],STL={new:'New',confirmed:'Confirmed',delivered:'Delivered',cancelled:'Cancelled'};
-let OR=[],CU={},oq='',ofl='';
+let OR=[],CU={},oq='',ofl='',oOpen=null;
 const fm=n=>'₼'+(Math.round(n*100)/100).toFixed(2).replace(/\.00$/,'');
 const dtm=s=>new Date(s).toLocaleString(AL==='az'?'az-AZ':'en-GB',{dateStyle:'medium',timeStyle:'short'});
 async function loadO(){try{CU=(await CUST.all())||{};}catch(e){CU={};toast(tr('Could not load orders: {e}',{e:e.message}));}
@@ -220,10 +222,44 @@ function drawO(){
   $('#tab-o').innerHTML=`${cloudHint()}<div class="savebar"><span><b>${OR.filter(o=>o.status==='new').length}</b> ${tr('new orders')} · ${OR.length} ${tr('in total')}</span><span><input id="oq" placeholder="${tr('Search name or phone')}" value="${esc(oq)}" oninput="oq=this.value;listO()" style="width:180px"> <select id="ofl" onchange="ofl=this.value;listO()" style="width:auto"><option value="">${tr('All statuses')}</option>${STS.map(s=>`<option value="${s}" ${ofl===s?'selected':''}>${tr(STL[s])}</option>`).join('')}</select> <button class="b s" onclick="renderO()">${tr('Refresh')}</button></span></div><div id="olist"></div>`;listO();}
 function listO(){const q=oq.trim().toLowerCase().replace(/^\+/,'');
   const l=OR.filter(o=>(!ofl||o.status===ofl)&&(!q||(o.name+' '+o.phone).toLowerCase().includes(q)));
-  $('#olist').innerHTML=l.map(o=>`<div class="oc st-b-${esc(o.status||'new')}"><div class="oh"><div><b>${esc(o.name)}</b>${o.ws?' <span class="st st-confirmed">Topdan</span>':''} · <a href="tel:+${esc(o.phone)}">+${esc(o.phone)}</a>${o.location?' · '+esc(o.location):''}</div><div>${dtm(o.date)} · #${esc(String(o.id).toUpperCase())}</div></div>
-   <table class="ot">${(o.items||[]).map(i=>`<tr><td>${esc(i.brand)} ${esc(i.model)}</td><td>× ${i.q}</td><td>${fm(i.unit*i.q)}</td></tr>`).join('')}</table>
+  const isF=o=>oOpen&&o._k===oOpen.k&&String(o.id).toLowerCase()===oOpen.id;
+  const note=oOpen&&!OR.some(isF)?`<p class="err">WhatsApp linki ilə açılan sifariş tapılmadı. Silinmiş ola bilər və ya onlayn baza bağlı deyil.</p>`:'';
+  const html=l.map(o=>`<div id="oc_${esc(o._k)}_${esc(o.id)}" class="oc clk st-b-${esc(o.status||'new')}${isF(o)?' hl':''}" onclick="openO('${esc(o._k)}','${esc(o.id)}',event)" title="Ətraflı bax"><div class="oh"><div><b>${esc(o.name)}</b>${o.ws?' <span class="st st-confirmed">Topdan</span>':''} · <a href="tel:+${esc(o.phone)}">+${esc(o.phone)}</a>${o.location?' · '+esc(o.location):''}</div><div>${dtm(o.date)} · #${esc(String(o.id).toUpperCase())}</div></div>
+   <table class="ot">${(o.items||[]).map(i=>`<tr><td class="oi">${imgTag((((o.ws?(D().wholesale||{}).products:D().products)||[]).find(w=>w.id===i.id))||{id:i.id,ws:o.ws?1:0,kind:'watch',color:'#8b5cf6',brand:i.brand,model:i.model},esc(i.brand+' '+i.model))}</td><td>${esc(i.brand)} ${esc(i.model)}</td><td>× ${i.q}</td><td>${fm(i.unit*i.q)}</td></tr>`).join('')}</table>
    <div class="otot">${o.sale>0?`<span>${tr('Sale savings')}: -${fm(o.sale)}</span>`:''}${o.promo>0?`<span>${tr('Promo code')} ${esc(o.code)}: -${fm(o.promo)}</span>`:''}<b>${tr('Total')}: ${fm(o.total)}</b></div>
-   <div class="acts"><select onchange="stO('${esc(o._k)}','${esc(o.id)}',this.value)">${STS.map(s=>`<option value="${s}" ${s===(o.status||'new')?'selected':''}>${tr(STL[s])}</option>`).join('')}</select><button class="b s r" onclick="delO('${esc(o._k)}','${esc(o.id)}')">${tr('Delete')}</button></div></div>`).join('')||`<p>${tr('No orders yet.')}</p>`;}
+   <div class="acts"><button class="b s" onclick="openO('${esc(o._k)}','${esc(o.id)}')">Ətraflı bax</button><select onchange="stO('${esc(o._k)}','${esc(o.id)}',this.value)">${STS.map(s=>`<option value="${s}" ${s===(o.status||'new')?'selected':''}>${tr(STL[s])}</option>`).join('')}</select><button class="b s r" onclick="delO('${esc(o._k)}','${esc(o.id)}')">${tr('Delete')}</button></div></div>`).join('');
+  $('#olist').innerHTML=note+(html||`<p>${tr('No orders yet.')}</p>`);
+  if(oOpen){const el=document.getElementById('oc_'+oOpen.k+'_'+oOpen.id);if(el)el.scrollIntoView({block:'center'});oOpen=null;}}
+/* ---------- order details in a new window: big photos + every detail ---------- */
+function openO(k,id,e){if(e&&e.target&&e.target.closest&&e.target.closest('a,button,select,input,label'))return;
+  const o=OR.find(x=>x._k===k&&String(x.id)===String(id));if(!o)return;
+  const w=window.open('','_blank');if(!w){alert('Brauzer yeni pəncərəni blokladı. Bu sayt üçün pop-up pəncərələrə icazə verin.');return;}
+  w.document.open();w.document.write(orderDoc(o));w.document.close();}
+function orderDoc(o){
+  const PL=(o.ws?(D().wholesale||{}).products:D().products)||[],ALL=(o.ws?(D().wholesale||{}).albums:D().albums)||[];
+  const st=tr(STL[o.status||'new']||o.status||''),n=(o.items||[]).length,row=(a,b)=>b?`<tr><th>${a}</th><td>${esc(b)}</td></tr>`:'';
+  const items=(o.items||[]).map(i=>{const p=PL.find(x=>x.id===i.id),pr=p||{id:i.id,ws:o.ws?1:0,kind:'watch',color:'#8b5cf6',brand:i.brand,model:i.model};
+    const cat=p?ALL.filter(a=>(p.tags||[]).includes(a.key)).map(aN).join(', '):'',sale=+i.price>+i.unit+0.004;
+    return `<div class="it"><div class="ph">${imgTag(pr,esc(i.brand+' '+i.model))}</div><div class="inf"><h2>${esc(i.brand)} ${esc(i.model)}</h2>
+     <p class="pp">${fm(i.unit)}${sale?` <s>${fm(i.price)}</s>`:''} × ${esc(i.q)} = <b>${fm(i.unit*i.q)}</b></p>
+     <table>${row('Marka',i.brand)}${row('Model',i.model)}${row('Albom',cat)}${row('Ölçü',p&&p.size)}${row('Rəng / çalar',p&&p.shade)}${row('Mənşə',p&&p.origin)}${row('Təsvir',p&&p.desc)}${row('Məhsulun nömrəsi','#'+i.id)}${p?row('Anbarda qalıb',p.stock+' ədəd'):''}</table></div></div>`;}).join('');
+  const css='*{box-sizing:border-box}body{margin:0;background:#f6eef1;color:#2a1722;font-family:system-ui,Segoe UI,Arial,sans-serif;line-height:1.5}.wrap{max-width:980px;margin:0 auto;padding:22px 16px 50px}'
+   +'.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px}h1{margin:0;font-size:1.6rem}.top p{margin:4px 0 0;color:#7d6169}'
+   +'.tg{display:inline-block;background:#3b2140;color:#fff;border-radius:99px;padding:5px 14px;font-weight:600;margin-left:6px}.tg.w{background:#b3261e}'
+   +'.box{background:#fff;border:1px solid #ecdde3;border-radius:14px;padding:16px 18px;margin:14px 0}h3{margin:0 0 10px}h3.sec{margin:26px 0 4px}'
+   +'table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 8px;border-bottom:1px dashed #ecdde3;vertical-align:top}th{width:38%;color:#7d6169;font-weight:600}a{color:#c2476b;font-weight:600}'
+   +'.it{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;background:#fff;border:1px solid #ecdde3;border-radius:14px;padding:16px;margin:14px 0}'
+   +'.ph{background:#fff;border:1px solid #f0e3e8;border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:260px}.ph img{width:100%;max-height:560px;object-fit:contain;border-radius:12px;display:block}'
+   +'.inf h2{margin:0 0 6px;font-size:1.35rem}.pp{font-size:1.15rem;margin:0 0 10px}.pp s{color:#999;margin:0 4px}'
+   +'.tot td:last-child{text-align:right;font-weight:600}.tot tr.g td{font-size:1.25rem;border-bottom:0;padding-top:12px}.pr{text-align:center;margin-top:20px}'
+   +'button{background:#3b2140;color:#fff;border:0;border-radius:10px;padding:11px 22px;font-size:1rem;cursor:pointer}@media(max-width:700px){.it{grid-template-columns:1fr}}@media print{.pr{display:none}body{background:#fff}}';
+  const tot=(o.orig!=null?`<tr><td>Məbləğ</td><td>${fm(o.orig)}</td></tr>`:'')+(o.sale>0?`<tr><td>Endirim</td><td>-${fm(o.sale)}</td></tr>`:'')+(o.promo>0?`<tr><td>Promo kod ${esc(o.code)}</td><td>-${fm(o.promo)}</td></tr>`:'')+`<tr class="g"><td>Ümumi məbləğ</td><td>${fm(o.total)}</td></tr>`;
+  return `<!DOCTYPE html><html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sifariş #${esc(String(o.id).toUpperCase())}</title><style>${css}</style></head><body><div class="wrap">
+   <div class="top"><div><h1>Sifariş #${esc(String(o.id).toUpperCase())}</h1><p>${esc(dtm(o.date))}</p></div><div>${o.ws?'<span class="tg w">Topdan</span>':''}<span class="tg">${esc(st)}</span></div></div>
+   <div class="box"><h3>Müştəri</h3><table><tr><th>Ad</th><td>${esc(o.name)}</td></tr><tr><th>Telefon</th><td><a href="tel:+${esc(o.phone)}">+${esc(o.phone)}</a> · <a href="https://wa.me/${esc(o.phone)}" target="_blank" rel="noopener">WhatsApp</a></td></tr>${o.location?`<tr><th>Ünvan</th><td>${esc(o.location)}</td></tr>`:''}</table></div>
+   <h3 class="sec">Sifariş edilən mallar (${n})</h3>${items}
+   <div class="box"><h3>Ödəniləcək məbləğ</h3><table class="tot">${tot}</table></div>
+   <p class="pr"><button onclick="window.print()">Çap et</button></p></div></body></html>`;}
 async function stO(k,id,s){try{await CUST.setStatus(k,id,s);const o=OR.find(x=>x.id===id&&x._k===k);if(o)o.status=s;drawO();toast(tr('Saved ✓'));}catch(e){toast(tr('Could not save online: {e}',{e:e.message}));}}
 async function delO(k,id){if(!confirm(tr('Delete this order?')))return;try{await CUST.del(k,id);OR=OR.filter(x=>!(x.id===id&&x._k===k));drawO();}catch(e){toast(tr('Could not save online: {e}',{e:e.message}));}}
 async function renderU(){$('#tab-u').innerHTML='<p>…</p>';await loadO();

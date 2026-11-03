@@ -50,3 +50,8 @@ header .alang,#login .alang{padding:0!important;border:0!important;background:no
 .oh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid #f0e3e8;font-size:1.02rem}.oh a{color:#c2476b;font-weight:600}
 .ot{width:100%;border-collapse:collapse}.ot td,.ot th{padding:6px 8px;border-bottom:1px dashed #ecdde3;text-align:left}.ot td:last-child{text-align:right}.ot th{background:#faf1f4}
 .otot{display:flex;gap:16px;justify-content:flex-end;flex-wrap:wrap;margin:10px 0}.otot b{font-size:1.1rem}.oc .acts{display:flex;gap:8px;align-items:center}.oc select{width:auto;margin:0}.tw{overflow-x:auto}.hint{color:#7d6169;font-size:.9rem}
+
+.ot td.oi{width:74px;padding:6px 8px 6px 0}.ot td.oi img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #ecdde3;display:block;background:#faf1f4}
+.oopen{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff7e0;border:1px solid #e9b44c;border-radius:10px;padding:10px 14px;margin:12px 0}
+.oc.hl{box-shadow:0 0 0 3px #c2476b55}
+.oc.clk{cursor:pointer}.oc.clk:hover{box-shadow:0 4px 18px #c2476b33}

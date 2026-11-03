@@ -156,13 +156,13 @@ function tkDonePage(o){fab();
    <p>${t('willCall')}</p><a class="btn" href="account.html">${t('myOrders')}</a> <a class="btn ghost" style="color:var(--ink)" href="products.html">${t('continue')}</a></div></section>`;scrollTo(0,0);}
 
 /* ---------- after the order: customer sends product names + photos to the admin's WhatsApp ---------- */
+Object.assign(T.en,{waOpen:'Open the order'});Object.assign(T.az,{waOpen:'Sifarişə bax'});
+/* the WhatsApp message holds only the customer + ONE link that opens this order in the admin page (admin/index.html#order=PHONE_ID) */
+function tkOrderLink(o){return new URL('admin/index.html#order='+o.phone+'_'+o.id,ROOT).href;}
 function tkWaText(o){const m=[],ln=(a,b)=>b?a+': '+b:a;
   m.push((WS?t('wsOrderTag')+' ':'')+t('waOrder')+' #'+String(o.id).toUpperCase());
-  m.push(ln(t('yName'),o.name));m.push(ln(t('yPhone'),'+'+o.phone));if(o.location)m.push(ln(t('yLocation'),o.location));m.push('');
-  (o.items||[]).forEach((i,n)=>{const w=PRODS().find(x=>x.id===i.id),pg=new URL((WS?'topdan/':'')+'product.html?id='+i.id,ROOT).href;
-   m.push((n+1)+') '+i.brand+' '+i.model+' × '+i.q+' — '+f$(i.unit*i.q));
-   const im=w&&w.img&&!/^data:/.test(w.img)?imgSrc(w.img):'';m.push('   '+t('waPhoto')+': '+(im||pg));if(im)m.push('   '+pg);});
-  m.push('');m.push(t('total')+': '+f$(o.total));return m.join('\n');}
+  m.push(ln(t('yName'),o.name));m.push(ln(t('yPhone'),'+'+o.phone));m.push(t('total')+': '+f$(o.total));m.push('');
+  m.push(t('waOpen')+': '+tkOrderLink(o));return m.join('\n');}
 function tkWaUrl(text){const c=CT(),b=waLink(c.wa||c.ph);return b?b+(b.includes('?')?'&':'?')+'text='+encodeURIComponent(text):'';}
 function tkWaGet(){try{return JSON.parse(localStorage.getItem(CK('wa')));}catch(e){return null;}}
 function tkWaSend(){const P=tkWaGet();if(!P)return;const u=tkWaUrl(P.text);if(!u){alert(t('orderFail'));return;}
