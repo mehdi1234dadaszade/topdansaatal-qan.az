@@ -30,19 +30,26 @@ const CT=()=>{const C=DB.data.settings.contact||{},ph=C.phone||'';
 const card=w=>`<a class="card" href="product.html?id=${w.id}">${w.stock<=0?`<span class="badge no">${t('outOfStock')}</span>`:''}${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div>${w.stock>0?`<button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button>`:''}</a>`;
 const inAlbum=(w,k)=>k==='all'||(w.tags||[]).includes(k);
 
+/* header: hide the centered text if there is no room for it (never overlaps logo or buttons) */
+function fitHexp(){const e=document.querySelector('.hexp');if(!e)return;e.style.display='';
+  const a=e.getBoundingClientRect();if(!a.width)return;
+  const bad=x=>{if(!x)return false;const r=x.getBoundingClientRect();return a.left<r.right+14&&a.right>r.left-14;};
+  if(bad(document.querySelector('.bar .logo'))||bad(document.querySelector('.bar .hact')))e.style.display='none';}
 function chrome(page){
   document.title=NAME()+(WS?' · '+t('wsTag'):'');
   document.documentElement.lang='az'; document.documentElement.dir='ltr';
   const H=DB.data.settings.home||{},c=CT();
-  const nav=[['index','index.html','home'],['products','products.html','products'],['albums','albums.html','albums'],['contact','contact.html','contact'],['account','account.html','account']];
+  const nav=[['index','index.html','home'],[WS?'products':'wslink',WS?'products.html':'topdan/index.html','navProducts',WS?'':'onclick="return wsOpen(event)"'],['albums','albums.html','navAlbums'],['contact','contact.html','contact'],['account','account.html','account']];
   if(WS)nav.push(['main','../index.html','mainSite']);
   const who=localStorage.getItem('tk_phone')?(localStorage.getItem('tk_name')||'').split(' ')[0]:'';
   const auth=who?`<a class="pill so" href="account.html">${ic('user')}<span>${esc(who)}</span></a>`
    :`<a class="pill gh" href="account.html">${t('login')}</a><a class="pill so" href="account.html?signup=1">${t('signup')}</a>`;
   $('#hdr').innerHTML=`<div class="bar"><a class="logo" href="index.html"><img src="${esc(LOGO())}" alt=""><span>${esc(NAME())}</span></a>
+   <span class="hexp">${t('exp17')}</span>
    <div class="hact">${WS?`<span class="wtag">${esc(t('wsOrderTag'))}</span>`:''}${page==='index'?'':`<span class="hauth">${auth}</span>`}<button class="menub" type="button" aria-label="${esc(t('menu'))}" aria-expanded="false"><span>${t('menu')}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg></button></div></div>`;
+  fitHexp();addEventListener('resize',fitHexp);addEventListener('load',fitHexp);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitHexp);
   const pn=document.createElement('div');pn.innerHTML=`<div class="mback"></div><aside class="mpanel" aria-label="${esc(t('menu'))}"><div class="mtop"><b>${esc(NAME())}</b><button class="mclose" type="button" aria-label="${esc(t('close'))}">×</button></div>
-   <nav>${nav.map(n=>`<a href="${n[1]}" class="${page===n[0]?'on':''}">${t(n[2])}</a>`).join('')}</nav>
+   <nav>${nav.map(n=>`<a href="${n[1]}" class="${page===n[0]?'on':''}"${n[3]?' '+n[3]:''}>${t(n[2])}</a>`).join('')}</nav>
    <div class="mauth">${who?`<a class="pill so" href="account.html">${t('account')}</a>`:`<a class="pill gh" href="account.html">${t('login')}</a><a class="pill so" href="account.html?signup=1">${t('signup')}</a>`}</div>
    <div class="soc">${socials()}</div></aside>`;
   while(pn.firstChild)document.body.appendChild(pn.firstChild);
@@ -50,8 +57,8 @@ function chrome(page){
   $('.menub').onclick=()=>mo(!document.body.classList.contains('mopen'));$('.mclose').onclick=()=>mo(false);$('.mback').onclick=()=>mo(false);
   document.querySelectorAll('.mpanel nav a,.mpanel .mauth a').forEach(a=>a.addEventListener('click',()=>mo(false)));
   addEventListener('keydown',e=>{if(e.key==='Escape')mo(false);});
-  $('#ftr').innerHTML=`<div class="fgrid"><div><a class="logo" href="index.html"><img src="${esc(LOGO())}" alt=""><span>${esc(NAME())}</span></a><p>${esc((H.sub&&H.sub[L])||t('heroS'))}</p></div>
-   <div><h4>${t('links')}</h4>${nav.map(n=>`<a href="${n[1]}">${t(n[2])}</a>`).join('')}</div>
+  $('#ftr').innerHTML=`<div class="fgrid"><div><a class="logo" href="index.html"><img src="${esc(LOGO())}" alt=""><span>${esc(NAME())}</span></a></div>
+   <div><h4>${t('links')}</h4>${nav.map(n=>`<a href="${n[1]}"${n[3]?' '+n[3]:''}>${t(n[2])}</a>`).join('')}</div>
    <div><h4>${t('contact')}</h4>${c.ph?`<a dir="ltr" href="tel:${esc(c.tel)}">${esc(c.ph)}</a>`:''}<span>${esc(c.ad)}</span>
     <div class="soc">${socials()}</div></div></div>
    <div class="fcopy">© ${new Date().getFullYear()} ${esc(NAME())}. ${t('rights')}</div>`;
@@ -116,13 +123,12 @@ const pages={
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
     :`<video autoplay muted loop playsinline preload="auto" ${Z.poster?`poster="${esc(imgSrc(Z.poster))}"`:''}><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
-   <div class="hin2"><span class="eyebrow">${esc(t('wsTag'))}</span><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
-   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a> <a class="btn ghost" href="albums.html">${t('wsAlb')}</a></div></div>
+   <div class="hin2"><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
+   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section><span id="after"></span>
    ${brands.length?`<div class="strip"><b>${t('brandsT')}</b>${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`:''}
    ${A.length?`<section class="wrap"><div class="head"><h2>${t('albums')}</h2></div><div class="grid">${A.map(albumCard).join('')}</div></section>`:''}
-   <section class="wrap"><div class="head"><h2>${t('wsFeat')}</h2></div>${f.length?`<div class="grid">${f.map(card).join('')}</div>`:`<div class="emptyc"><p>${t('wsEmpty')}</p></div>`}</section>
    <section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>
    <section class="cta"><h2>${t('w3')}</h2><p>${t('w3d')}</p><a class="btn" href="contact.html">${t('contact')}</a></section>`;
   const vv=$('.hero.vh video');if(vv){vv.muted=true;const p=vv.play();if(p&&p.catch)p.catch(()=>{});}
@@ -143,11 +149,11 @@ const pages={
    ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
     :`<video autoplay muted loop playsinline preload="auto" ${Z.poster?`poster="${esc(imgSrc(Z.poster))}"`:''}><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
-  const heroHTML=classic?`<section class="hero ${full?'full':''}">${full?sl+'<div class="ov"></div>':''}<div class="hin"><div class="hcopy"><span class="eyebrow">${esc(NAME())}</span>
+  const heroHTML=classic?`<section class="hero ${full?'full':''}">${full?sl+'<div class="ov"></div>':''}<div class="hin"><div class="hcopy">
    <h1>${ttl}</h1><p>${sub}</p>
    <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> <a class="btn ghost" href="albums.html">${t('browse')}</a></div></div>${full?'':`<div class="hvis">${sl}</div>`}</div></section>`
    :`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
-   <div class="hin2"><span class="eyebrow">${esc(NAME())}</span><h1>${ttl}</h1><p>${sub}</p>
+   <div class="hin2"><h1>${ttl}</h1><p>${sub}</p>
    <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> <a class="btn ghost" href="albums.html">${t('browse')}</a></div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section>
@@ -156,7 +162,6 @@ const pages={
    ${H.showBrands===false||!brands.length?'':`<div class="strip"><b>${t('brandsT')}</b>${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`}
    ${on('albums')?`<section class="wrap"><div class="head"><h2>${t('albums')}</h2></div><div class="grid">${ALBS().map(albumCard).join('')}</div></section>`:''}
    ${on('video')&&vid?`<section class="vid"><div class="wrap"><div class="head"><h2>${t('videoT')}</h2></div><div class="vbox">${vid}</div></div></section>`:''}
-   ${on('featured')?`<section class="wrap"><div class="head"><h2>${t('featured')}</h2></div><div class="grid">${f.map(card).join('')}</div></section>`:''}
    ${on('gallery')&&gal.length?`<section class="wrap"><div class="head"><h2>${t('galleryT')}</h2></div><div class="gal">${gal.map(g=>`<figure><img src="${esc(imgSrc(g.img))}" alt="${esc(gcap(g))}" loading="lazy">${gcap(g)?`<figcaption>${esc(gcap(g))}</figcaption>`:''}</figure>`).join('')}</div></section>`:''}
    ${on('why')?`<section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>`:''}
    ${on('cta')?`<section class="cta ${H.ctaImg?'img':''}" ${H.ctaImg?`style="--cta:url('${esc(imgSrc(H.ctaImg)).replace(/'/g,'%27')}')"`:''}><h2>${t('w3')}</h2><p>${t('w3d')}</p><a class="btn" href="contact.html">${t('contact')}</a></section>`:''}`;

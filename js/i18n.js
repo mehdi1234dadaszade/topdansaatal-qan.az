@@ -59,3 +59,15 @@ Object.assign(T.tr,{waTitle:'Bir adım kaldı: siparişinizi WhatsApp\'a gönder
 /* TOPDAN (wholesale) site */
 Object.assign(T.en,{wsBtn:'For wholesale customers',wsHeroT:'Special prices for wholesale customers',wsHeroS:'Watch models and wholesale prices for wholesale buyers only. Choose a model and send your order on WhatsApp.',wsTag:'Wholesale customers',wsShop:'See wholesale watches',wsAlb:'Browse albums',wsProducts:'Wholesale watches',wsPrice:'Wholesale price',wsEmpty:'Wholesale goods will be added soon.',wsFeat:'Selected wholesale watches',wsGateT:'Wholesale customers',wsGateD:'Enter the password to continue.',wsPass:'Password',wsEnter:'Enter',wsBad:'Wrong password.',wsBack:'Back to the home page',mainSite:'Back to the main site',wsOrderTag:'WHOLESALE'});
 Object.assign(T.az,{wsBtn:'Topdan müştərilər üçün',wsHeroT:'Topdan müştərilər üçün xüsusi qiymətlər',wsHeroS:'Yalnız topdan alıcılar üçün saat modelləri və topdan qiymətlər. Modeli seçin və sifarişi WhatsApp-da göndərin.',wsTag:'Topdan müştərilər',wsShop:'Topdan saatlara bax',wsAlb:'Albomlara bax',wsProducts:'Topdan saatlar',wsPrice:'Topdan qiymət',wsEmpty:'Topdan mallar tezliklə əlavə olunacaq.',wsFeat:'Seçilmiş topdan saatlar',wsGateT:'Topdan müştərilər',wsGateD:'Davam etmək üçün parolu daxil edin.',wsPass:'Parol',wsEnter:'Daxil ol',wsBad:'Parol yanlışdır.',wsBack:'Ana səhifəyə qayıt',mainSite:'Əsas sayta qayıt',wsOrderTag:'TOPDAN'});
+
+/* header: experience text */
+Object.assign(T.en,{exp17:'17 Years of Experience'});
+Object.assign(T.az,{exp17:'17 İllik Təcrübə'});
+Object.assign(T.ru,{exp17:'17 лет опыта'});
+Object.assign(T.tr,{exp17:'17 Yıllık Deneyim'});
+
+/* menu + footer links */
+Object.assign(T.en,{navProducts:'Wholesale Products',navAlbums:'Premium Models'});
+Object.assign(T.az,{navProducts:'Topdan Məhsullar',navAlbums:'Premium Modellər'});
+Object.assign(T.ru,{navProducts:'Оптовые товары',navAlbums:'Премиум модели'});
+Object.assign(T.tr,{navProducts:'Toptan Ürünler',navAlbums:'Premium Modeller'});
