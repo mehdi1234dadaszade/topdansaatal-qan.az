@@ -359,3 +359,8 @@ html.wh .hero.vh.novid{background:radial-gradient(70% 60% at 50% 100%,var(--hero
 .wbox input{display:block;width:100%;padding:14px 18px;border-radius:40px;border:1px solid #ffffff24;background:#ffffff0d;color:var(--ink);font:inherit;text-align:center;letter-spacing:.08em}
 .wbox .btn{width:100%;margin:0 0 6px;padding:14px}
 .wback{display:inline-block;margin-top:8px;background:none;border:0;color:var(--mut);font:inherit;font-size:.92rem;cursor:pointer;text-decoration:underline}
+
+/* header: centered experience text */
+.bar{position:relative}
+.hexp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font:600 .9rem Inter,sans-serif;letter-spacing:.02em;color:#fff}
+@media(max-width:800px){.hexp{display:none}}
