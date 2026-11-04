@@ -301,7 +301,7 @@ a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{ou
  .hauth{display:none}.bar{padding:7px 8px 7px 12px}.logo span{max-width:46vw}
  .hin2{padding-bottom:140px}.hin2 h1{max-width:none}
  .hfoot{padding-bottom:20px}.hfoot .soc a{width:38px;height:38px}.scrolld{display:none}
- .pstage .pimg{width:min(300px,68vw)}.pst-in{padding-bottom:70px}
+ .pstage .pimg{width:min(600px,94vw)}.pst-in{padding-bottom:70px}
  .sliderwrap .slider{aspect-ratio:4/3}}
 /* menu panel must stay visible on phones (old mobile nav rule hides plain nav) */
 .mpanel nav{display:flex!important;width:auto;order:0;flex-direction:column}
@@ -309,7 +309,7 @@ a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{ou
 .mpanel nav a.on{background:none;box-shadow:none;color:var(--gold2)}
 
 /* product stage: drawn watches float over the logo; real photos get a soft frame */
-.pstage .pimg{width:min(400px,72vw);margin:0 auto 2vh}
+.pstage .pimg{width:min(800px,94vw);margin:0 auto 2vh}
 .pstage .pimg img{width:100%;border-radius:28px;box-shadow:0 0 0 1px #ffffff1f,0 0 80px -10px var(--gold)}
 .pstage .pimg img.bare{border-radius:0;box-shadow:none;filter:drop-shadow(0 24px 30px #000a)}
 @media(min-width:900px){.pstage:before{background-size:auto 104%;background-position:center top}}
@@ -387,3 +387,7 @@ header.hide{transform:translateY(-120%)}
 .bback{margin:0 0 14px}.bback a{text-decoration:none;opacity:.85}.bback a:hover{opacity:1}
 @media(max-width:900px){.bframes{grid-template-columns:1fr}}
 @media(max-width:420px){.bgrid3{grid-template-columns:repeat(2,minmax(0,1fr))}.bframe{padding:20px 14px 16px;border-radius:24px}}
+
+/* mechanism label (replaces stock) */
+.mech{font-weight:600;margin:6px 0;color:#d4d2e6}.mech b{color:var(--gold2,#e7c46a)}
+.cb .mech{margin:4px 0 10px;font-size:.88rem}
