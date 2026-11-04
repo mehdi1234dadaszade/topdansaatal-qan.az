@@ -148,3 +148,9 @@ Object.assign(AZ,{
 'watch':'Saat','chrono':'Xronoqraf','dress':'Klassik saat','smart':'Ağıllı saat','band':'Bilərzik'
 });
 Object.assign(AZ,{'Wholesale goods':'Topdan mallar'});
+Object.assign(AZ,{
+'Photo storage':'Şəkil yaddaşı',
+'{mb} MB used of the 1024 MB free online database space ({p}%)':'Pulsuz onlayn baza yaddaşının 1024 MB-dan {mb} MB istifadə olunub ({p}%)',
+'Every page opening downloads this data. With the free plan limit of 10 GB downloads per month that is about {n} page openings.':'Hər səhifə açılışında bu məlumat yüklənir. Pulsuz planda ayda 10 GB endirmə limiti var, bu ölçüdə təxminən {n} səhifə açılışına çatır.',
+'Photos you upload are saved in the online database (Firebase), so the browser limit of about 5 MB does not stop you from uploading. But the photos are part of the data every visitor downloads. For many photos the best way is: put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields.':'Yüklədiyiniz şəkillər onlayn bazada (Firebase) saxlanılır, ona görə brauzerin təxminən 5 MB limiti yükləməyə mane olmur. Amma şəkillər hər ziyarətçinin yüklədiyi məlumatın içindədir. Çoxlu şəkil üçün ən yaxşı yol: şəkil fayllarını GitHub-da <b>images/home/</b> qovluğuna qoyun və yolunu (məsələn <b>images/home/slide-1.jpg</b>) şəkil xanalarına yapışdırın.'
+});

@@ -98,10 +98,20 @@ function renderD(){
    <p>${tr('Changes are saved in <b>this browser</b>. To show them to all visitors: click <b>Download store.json</b>, then upload that file to the main folder of your GitHub repository (replace the old one).')}</p>
    <p><button class="b g" onclick="exp()">${tr('Download store.json')}</button></p>
    <label>${tr('Import a store.json file')}<input type="file" accept=".json" onchange="imp(this.files[0])"></label>
-   <p><button class="b s r" onclick="reset()">${tr('Reset to the 30 sample products')}</button></p><p id="msg" class="ok"></p></div><br><div class="box" style="max-width:none"><h2>${tr('Browser storage')}</h2>${meter()}
-   <p style="font-size:.9rem;color:#7d6169">${tr('Uploaded photos live inside your browser (about 5 MB available) and inside store.json. If it fills up, put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields instead.')}</p></div>`;
+   <p><button class="b s r" onclick="reset()">${tr('Reset to the 30 sample products')}</button></p><p id="msg" class="ok"></p></div><br><div class="box" style="max-width:none"><h2>${tr(DB.cloud()?'Photo storage':'Browser storage')}</h2>${meter()}
+   ${storageNote()}</div>`;
 }
-function meter(){const n=(localStorage.getItem('tk_data')||'').length,p=Math.min(100,Math.round(n/50000));return `<div class="meter"><i style="width:${p}%"></i></div>${tr('{mb} MB of about 5 MB used ({p}%)',{mb:(n/1048576).toFixed(2),p})}${p>75?' <span style="color:#b3261e">'+tr('- almost full!')+'</span>':''}`;}
+function meterLocal(){const n=(localStorage.getItem('tk_data')||'').length,p=Math.min(100,Math.round(n/50000));return `<div class="meter"><i style="width:${p}%"></i></div>${tr('{mb} MB of about 5 MB used ({p}%)',{mb:(n/1048576).toFixed(2),p})}${p>75?' <span style="color:#b3261e">'+tr('- almost full!')+'</span>':''}`;}
+/* storage box: with the online database (Firebase) the real space is the database, not the ~5 MB browser cache */
+function meter(){return DB.cloud()?meterCloud():meterLocal();}
+function meterCloud(){
+  const n=new Blob([JSON.stringify(D())]).size,mb=n/1048576,p=Math.max(1,Math.min(100,Math.round(mb/1024*100))),
+        pages=mb>0?Math.floor(10240/mb):0,fmt=String(pages).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  return `<div class="meter"><i style="width:${p}%"></i></div>${tr('{mb} MB used of the 1024 MB free online database space ({p}%)',{mb:mb.toFixed(2),p:p})}
+   <p style="font-size:.9rem;color:#7d6169;margin:.5rem 0 0">${tr('Every page opening downloads this data. With the free plan limit of 10 GB downloads per month that is about {n} page openings.',{n:fmt})}</p>`;}
+function storageNote(){
+  if(!DB.cloud())return `<p style="font-size:.9rem;color:#7d6169">${tr('Uploaded photos live inside your browser (about 5 MB available) and inside store.json. If it fills up, put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields instead.')}</p>`;
+  return `<p style="font-size:.9rem;color:#7d6169">${tr('Photos you upload are saved in the online database (Firebase), so the browser limit of about 5 MB does not stop you from uploading. But the photos are part of the data every visitor downloads. For many photos the best way is: put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields.')}</p>`;}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D(),null,1)],{type:'application/json'}));a.download='store.json';a.click();}
 function imp(f){if(!f)return;f.text().then(s=>{try{const d=JSON.parse(s);if(!d.albums||!d.products)throw 0;d.settings=d.settings||{};if(D().settings&&D().settings.adminLogin)d.settings.adminLogin=D().settings.adminLogin;
     if(!d.wholesale&&D().wholesale)d.wholesale=D().wholesale;['wholesaleKey','wdiscounts'].forEach(k=>{if(d.settings[k]==null&&D().settings&&D().settings[k]!=null)d.settings[k]=D().settings[k];});DB.data=d;DB.save();render();$('#msg').textContent=tr('Imported.');}catch(e){alert(tr('This is not a valid store.json file.'));}});}
