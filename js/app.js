@@ -27,7 +27,7 @@ function socials(){const c=CT();
 const CT=()=>{const C=DB.data.settings.contact||{},ph=C.phone||'';
  return {ph,tel:ph.replace(/[^\d+]/g,''),ad:C.address||'',mp:C.maps||'',
   ig:C.instagram||'',tk:C.tiktok||'',wa:C.whatsapp||'',yt:C.youtube||'',q:C.map||''};};
-const card=w=>`<a class="card" href="product.html?id=${w.id}">${w.stock<=0?`<span class="badge no">${t('outOfStock')}</span>`:''}${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div>${w.stock>0?`<button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button>`:''}</a>`;
+const card=w=>`<a class="card" href="product.html?id=${w.id}">${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div>${w.stock>0?`<button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button>`:''}</a>`;
 const inAlbum=(w,k)=>k==='all'||(w.tags||[]).includes(k);
 
 /* header: hide the centered text if there is no room for it (never overlaps logo or buttons) */
@@ -215,11 +215,11 @@ const pages={
   $('#main').innerHTML=`<section class="pstage" style="--pbg:url('${bg}');--pdim:${dim}"><div class="pst-in"><div class="crumbs"><a href="index.html">${t('home')}</a> / <a href="products.html">${t('products')}</a> / ${esc(w.brand)} ${esc(w.model)}</div>
    <div class="pimg"><img src="${esc(photo(w))}" alt="${esc(w.brand+' '+w.model)}" onerror="this.onerror=null;this.src=this.dataset.f;this.classList.add('bare')" data-f="${productImg({...w,img:'',bare:1})}"></div>
    <div class="ptitle"><h1>${esc(w.brand)} ${esc(w.model)}</h1><p class="big">${priceHTML(w,1)}</p>
-   <p class="stock ${w.stock>0?'ok':'no'}">${w.stock>0?`${t('inStock')}: ${esc(w.stock)} ${t('pcs')}`:t('outOfStock')}</p></div></div>
+   ${w.mech?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}</div></div>
    <a class="scrolld" href="#pdet" aria-label="${esc(t('details'))}"><span>${t('details')}</span><i></i></a></section>
    <section class="wrap" id="pdet"><div class="pdet"><div class="head"><h2>${t('details')}</h2></div><p class="pdesc">${esc(w.desc)||t('desc')}</p>
-   <table>${row(t('brand'),esc(w.brand))}${row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${w.size?row(t('size'),esc(w.size)):''}${w.shade?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
-   <div class="pbtns">${w.stock>0?`<button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> `:''}${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="products.html">${t('back')}</a></div></div>
+   <table>${row(t('brand'),esc(w.brand))}${row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${w.size?row(t('size'),esc(w.size)):''}${w.shade?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${w.mech?row(t('mech'),esc(w.mech)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
+   <div class="pbtns"><button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> ${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="products.html">${t('back')}</a></div></div>
    ${rel.length?`<div class="head" style="margin-top:56px"><h2>${t('related')}</h2></div><div class="grid">${rel.map(card).join('')}</div>`:''}</section>`;
  },
  contact(){

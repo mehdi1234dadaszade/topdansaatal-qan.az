@@ -27,7 +27,7 @@ const CART={
  get(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}},
  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}},
  items(){return CART.get(CK('cart'),[]);},saved(){return CART.get(CK('saved'),[]);},
- max(w){return Math.max(0,Math.min(99,w.stock==null?99:+w.stock));}
+ max(w){return 99;}
 };
 function tkLines(){return CART.items().map(c=>{const w=PRODS().find(x=>x.id===c.id);if(!w)return null;const mx=CART.max(w);return {w,mx,q:Math.min(c.q,mx),u:unit(w)};}).filter(Boolean);}
 function tkTotals(){const ls=tkLines().filter(l=>l.q>0);let orig=0,sub=0;ls.forEach(l=>{orig+=l.w.price*l.q;sub+=l.u*l.q;});
@@ -64,7 +64,7 @@ function tkApply(){const v=document.getElementById('pc').value.trim();
 function tkCartPage(){
   const T0=tkTotals(),all=tkLines(),sv=CART.saved().map(id=>PRODS().find(x=>x.id===id)).filter(Boolean);
   const line=l=>{const w=l.w,out=l.mx<=0,s=tkSale(w);return `<div class="cl"><a href="product.html?id=${w.id}" class="cimg">${imgTag(w,esc(w.brand+' '+w.model))}</a><div class="cb"><a class="cn" href="product.html?id=${w.id}">${esc(w.brand)} ${esc(w.model)}</a>
-   ${out?`<p class="stock no">${t('outShort')}</p>`:`<p class="stock ok">${t('inStock')}${l.mx<=5?' · '+tt('onlyLeft',{n:l.mx}):''}</p>`}
+   ${w.mech?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}
    <div class="cacts">${out?'':`<span class="qty"><button onclick="tkQty(${w.id},-1)" aria-label="-">−</button><input type="number" min="1" max="${l.mx}" value="${l.q}" onchange="tkSetQ(${w.id},this.value)" aria-label="${t('qty')}"><button onclick="tkQty(${w.id},1)" aria-label="+">+</button></span>`}
    <button class="lnk" onclick="tkDel(${w.id})">${t('remove')}</button><button class="lnk" onclick="tkSave(${w.id})">${t('saveLater')}</button></div></div>
    <div class="cp">${out?'':s?`<b>${f$(l.u*l.q)}</b><s class="was">${f$(w.price*l.q)}</s><em class="off">-${s}%</em>`:`<b>${f$(w.price*l.q)}</b>`}${!out&&l.q>1?`<small>${f$(l.u)} ${t('each')}</small>`:''}</div></div>`;};
@@ -157,6 +157,7 @@ function tkDonePage(o){fab();
 
 /* ---------- after the order: customer sends product names + photos to the admin's WhatsApp ---------- */
 Object.assign(T.en,{waOpen:'Open the order'});Object.assign(T.az,{waOpen:'Sifarişə bax'});
+Object.assign(T.en,{mech:'Movement'});Object.assign(T.az,{mech:'Mexanizm'});Object.assign(T.ru,{mech:'Механизм'});Object.assign(T.tr,{mech:'Mekanizma'});
 /* the WhatsApp message holds only the customer + ONE link that opens this order in the admin page (admin/index.html#order=PHONE_ID) */
 function tkOrderLink(o){return new URL('admin/index.html#order='+o.phone+'_'+o.id,ROOT).href;}
 function tkWaText(o){const m=[],ln=(a,b)=>b?a+': '+b:a;
