@@ -36,22 +36,24 @@ let q='';
 function renderW(){
   const list=D().products.filter(w=>(w.brand+' '+w.model).toLowerCase().includes(q.toLowerCase()));
   $('#tab-w').innerHTML=`<div class="bar2"><input id="q" placeholder="${esc(tr('Search products'))}" value="${esc(q)}"><button class="b g" onclick="editW()">${tr('+ Add product')}</button></div>
-   <div class="stats"><div class="stat"><b>${D().products.length}</b><span>${tr('Products')}</span></div><div class="stat"><b>${D().albums.length}</b><span>${tr('Albums')}</span></div><div class="stat"><b>${D().products.filter(w=>w.stock>0&&w.stock<=5).length}</b><span>${tr('Low stock (5 or less)')}</span></div><div class="stat"><b>${D().products.filter(w=>w.stock<=0).length}</b><span>${tr('Out of stock')}</span></div></div>
-   <p>${tr('Change price or stock and it saves automatically. Yellow = low stock, red = out of stock (the website shows an "Out of stock" label).')}</p>`+
-   list.map(w=>`<div class="row ${w.stock<=0?'out':w.stock<=5?'low':''}">${imgTag(w)}<div><b>${esc(w.brand)} ${esc(w.model)}</b><small>${esc((w.tags||[]).join(', '))}</small></div>
+   <div class="stats"><div class="stat"><b>${D().products.length}</b><span>${tr('Products')}</span></div><div class="stat"><b>${D().albums.length}</b><span>${tr('Albums')}</span></div><div class="stat"><b>${D().products.filter(w=>w.mech==='Mexanika').length}</b><span>Mexanika</span></div><div class="stat"><b>${D().products.filter(w=>w.mech==='Kvars').length}</b><span>Kvars</span></div></div>
+   <p>Qiyməti və ya mexanizmi dəyişin, avtomatik saxlanılır.</p>`+
+   list.map(w=>`<div class="row">${imgTag(w)}<div><b>${esc(w.brand)} ${esc(w.model)}</b><small>${esc((w.tags||[]).join(', '))}</small></div>
     <label>${tr('Price ₼')}<input type="number" min="0" step="any" value="${w.price}" onchange="upd(${w.id},'price',this.value)"></label>
-    <label>${tr('Stock')}<input type="number" min="0" step="1" value="${w.stock}" onchange="upd(${w.id},'stock',this.value)"></label>
+    <label>Mexanizm${mechSel(w,`updM(${w.id},this.value)`)}</label>
     <div class="acts"><button class="b s" onclick="editW(${w.id})">${tr('Edit')}</button><button class="b s r" onclick="delW(${w.id})">${tr('Delete')}</button></div></div>`).join('');
   const qi=$('#q');qi.oninput=()=>{q=qi.value;renderW();const n=$('#q');n.focus();n.setSelectionRange(q.length,q.length);};
 }
+const mechSel=(w,on,all)=>`<select ${on?`onchange="${on}"`:'name="mech"'}>${(w.mech?'':'<option value="">—</option>')}${['Mexanika','Kvars'].map(m=>`<option value="${m}" ${w.mech===m?'selected':''}>${m}</option>`).join('')}</select>`;
+function updM(id,v){const w=D().products.find(x=>x.id===id);if(!w)return;w.mech=v;DB.save();}
 function upd(id,f,v){const w=D().products.find(x=>x.id===id);w[f]=Math.max(0,+v||0);DB.save();}
 function delW(id){const w=D().products.find(x=>x.id===id);
   if(confirm(tr('Delete {name}?',{name:w.brand+' '+w.model}))){D().products=D().products.filter(x=>x.id!==id);DB.save();renderW();}}
 function editW(id){
-  const w=id?D().products.find(x=>x.id===id):{brand:'',model:'',price:100,stock:100,kind:'watch',color:'#8b5cf6',tags:[],img:'',desc:''};
+  const w=id?D().products.find(x=>x.id===id):{brand:'',model:'',price:100,stock:100,mech:'Mexanika',kind:'watch',color:'#8b5cf6',tags:[],img:'',desc:''};
   $('#wf').innerHTML=`<h2>${id?tr('Edit product'):tr('Add product')}</h2>
    <div class="two"><label>${tr('Brand')}<input name="brand" required value="${esc(w.brand)}"></label><label>${tr('Model')}<input name="model" required value="${esc(w.model)}"></label>
-   <label>${tr('Price ₼')}<input name="price" type="number" min="0" step="any" required value="${w.price}"></label><label>${tr('Stock')}<input name="stock" type="number" min="0" required value="${w.stock}"></label>
+   <label>${tr('Price ₼')}<input name="price" type="number" min="0" step="any" required value="${w.price}"></label><label>Mexanizm${mechSel(w)}</label>
    <label>${tr('Shape (for the drawn picture)')}<select name="kind">${['watch','chrono','dress','smart','band'].map(m=>`<option value="${m}" ${w.kind===m?'selected':''}>${tr(m)}</option>`).join('')}</select></label>
    <label>${tr('Color')}<input type="color" name="color" value="${w.color||'#8b5cf6'}"></label></div>
    <label>${tr('Image URL (or put the file in images/products/ as product-ID.jpg)')}<input name="img" value="${w.img&&!w.img.startsWith('data:')?esc(w.img):''}" placeholder="https://..."></label>
@@ -67,7 +69,7 @@ function editW(id){
     if(e.submitter&&e.submitter.value!=='save')return;
     if(busy)await busy;
     const f=new FormData($('#wf')),o=id?w:{id:Math.max(0,...D().products.map(x=>x.id))+1};
-    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),stock:+f.get('stock'),kind:f.get('kind'),color:f.get('color'),
+    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),mech:f.get('mech')||'',kind:f.get('kind'),color:f.get('color'),
       img:f.get('img').trim()||photo,desc:f.get('desc').trim(),size:f.get('size').trim(),shade:f.get('shade').trim(),origin:f.get('origin').trim(),tags:f.getAll('tag')});
     if(!id)D().products.push(o);DB.save();renderW();renderA();};
   $('#dlg').showModal();
@@ -252,7 +254,7 @@ function orderDoc(o){
     const cat=p?ALL.filter(a=>(p.tags||[]).includes(a.key)).map(aN).join(', '):'',sale=+i.price>+i.unit+0.004;
     return `<div class="it"><div class="ph">${imgTag(pr,esc(i.brand+' '+i.model))}</div><div class="inf"><h2>${esc(i.brand)} ${esc(i.model)}</h2>
      <p class="pp">${fm(i.unit)}${sale?` <s>${fm(i.price)}</s>`:''} × ${esc(i.q)} = <b>${fm(i.unit*i.q)}</b></p>
-     <table>${row('Marka',i.brand)}${row('Model',i.model)}${row('Albom',cat)}${row('Ölçü',p&&p.size)}${row('Rəng / çalar',p&&p.shade)}${row('Mənşə',p&&p.origin)}${row('Təsvir',p&&p.desc)}${row('Məhsulun nömrəsi','#'+i.id)}${p?row('Anbarda qalıb',p.stock+' ədəd'):''}</table></div></div>`;}).join('');
+     <table>${row('Marka',i.brand)}${row('Model',i.model)}${row('Albom',cat)}${row('Ölçü',p&&p.size)}${row('Rəng / çalar',p&&p.shade)}${row('Mənşə',p&&p.origin)}${row('Mexanizm',p&&p.mech)}${row('Təsvir',p&&p.desc)}${row('Məhsulun nömrəsi','#'+i.id)}${p?row('Anbarda qalıb',p.stock+' ədəd'):''}</table></div></div>`;}).join('');
   const css='*{box-sizing:border-box}body{margin:0;background:#f6eef1;color:#2a1722;font-family:system-ui,Segoe UI,Arial,sans-serif;line-height:1.5}.wrap{max-width:980px;margin:0 auto;padding:22px 16px 50px}'
    +'.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px}h1{margin:0;font-size:1.6rem}.top p{margin:4px 0 0;color:#7d6169}'
    +'.tg{display:inline-block;background:#3b2140;color:#fff;border-radius:99px;padding:5px 14px;font-weight:600;margin-left:6px}.tg.w{background:#b3261e}'
@@ -365,12 +367,12 @@ const wsN=a=>a.name.az||a.name.en||a.key;
 function renderWS(){
   const W=WSD(),H=W.home||{},list=W.products.filter(w=>(w.brand+' '+w.model).toLowerCase().includes(wsq.toLowerCase()));
   $('#tab-z').innerHTML=`<div class="savebar"><span>Burada yüklənən mallar <b>yalnız topdan müştərilər səhifəsində</b> görünür. Əsas saytda görünmür.</span><span><a href="../topdan/index.html" target="_blank" style="color:#c2476b;font-weight:600">Topdan səhifəni aç ↗</a></span></div>
-   <div class="stats"><div class="stat"><b>${W.products.length}</b><span>Topdan məhsul</span></div><div class="stat"><b>${W.albums.length}</b><span>Topdan albom</span></div><div class="stat"><b>${W.products.filter(w=>w.stock>0&&w.stock<=5).length}</b><span>Az qalıb (5 və az)</span></div><div class="stat"><b>${W.products.filter(w=>w.stock<=0).length}</b><span>Stokda yoxdur</span></div></div>
+   <div class="stats"><div class="stat"><b>${W.products.length}</b><span>Topdan məhsul</span></div><div class="stat"><b>${W.albums.length}</b><span>Topdan albom</span></div><div class="stat"><b>${W.products.filter(w=>w.mech==='Mexanika').length}</b><span>Mexanika</span></div><div class="stat"><b>${W.products.filter(w=>w.mech==='Kvars').length}</b><span>Kvars</span></div></div>
    <div class="bar2"><input id="wsq" placeholder="Məhsul axtar" value="${esc(wsq)}"><button class="b g" onclick="wsEdit()">+ Topdan məhsul əlavə et</button></div>
-   <p>Qiyməti və stoku dəyişin, avtomatik saxlanılır. Burada yazdığınız qiymət <b>topdan qiymətdir</b>.</p>
-   ${list.map(w=>`<div class="row ${w.stock<=0?'out':w.stock<=5?'low':''}">${imgTag(w)}<div><b>${esc(w.brand)} ${esc(w.model)}</b><small>${esc((w.tags||[]).map(k=>{const a=W.albums.find(x=>x.key===k);return a?wsN(a):k;}).join(', '))}</small></div>
+   <p>Qiyməti və mexanizmi dəyişin, avtomatik saxlanılır. Burada yazdığınız qiymət <b>topdan qiymətdir</b>.</p>
+   ${list.map(w=>`<div class="row">${imgTag(w)}<div><b>${esc(w.brand)} ${esc(w.model)}</b><small>${esc((w.tags||[]).map(k=>{const a=W.albums.find(x=>x.key===k);return a?wsN(a):k;}).join(', '))}</small></div>
     <label>Topdan qiymət ₼<input type="number" min="0" step="any" value="${w.price}" onchange="wsUpd(${w.id},'price',this.value)"></label>
-    <label>Stok<input type="number" min="0" step="1" value="${w.stock}" onchange="wsUpd(${w.id},'stock',this.value)"></label>
+    <label>Mexanizm${mechSel(w,`wsUpdM(${w.id},this.value)`)}</label>
     <div class="acts"><button class="b s" onclick="wsEdit(${w.id})">Redaktə</button><button class="b s r" onclick="wsDel(${w.id})">Sil</button></div></div>`).join('')||'<p>Hələ topdan məhsul yoxdur. "+ Topdan məhsul əlavə et" düyməsini basın.</p>'}
    ${bigHTML(1)}<div class="card2"><h2>Topdan albomlar</h2><p class="hint">Albomlar topdan səhifəsində məhsulları qruplaşdırır (məsələn: Premium modellər, İdman). Məhsulu əlavə edərkən albom seçilir.</p>
    <form class="box" style="max-width:none" onsubmit="wsAddA(event)"><b>Yeni albom</b><div class="two"><label>Ad<input id="wsa_n" required></label></div><button class="b">Albom əlavə et</button></form>
@@ -390,13 +392,14 @@ function renderWS(){
    <p class="hint">Qeyd: bu giriş parolu brauzerdə yoxlanılır. Təsadüfi ziyarətçilərin girişinin qarşısını alır, lakin tam təhlükəsizlik mühafizəsi deyil.</p></div>`;
   const qi=$('#wsq');qi.oninput=()=>{wsq=qi.value;renderWS();const n=$('#wsq');n.focus();n.setSelectionRange(wsq.length,wsq.length);};
 }
+function wsUpdM(id,v){const w=WSD().products.find(x=>x.id===id);if(!w)return;w.mech=v;DB.save();}
 function wsUpd(id,f,v){const w=WSD().products.find(x=>x.id===id);if(!w)return;w[f]=Math.max(0,+v||0);DB.save();}
 function wsDel(id){const w=WSD().products.find(x=>x.id===id);if(w&&confirm('Silinsin: '+w.brand+' '+w.model+'?')){WSD().products=WSD().products.filter(x=>x.id!==id);DB.save();renderWS();}}
 function wsEdit(id){
-  const W=WSD(),w=id?W.products.find(x=>x.id===id):{brand:'',model:'',price:100,stock:100,kind:'watch',color:'#e11d2e',tags:[],img:'',desc:'',size:'',shade:'',origin:''};
+  const W=WSD(),w=id?W.products.find(x=>x.id===id):{brand:'',model:'',price:100,stock:100,mech:'Mexanika',kind:'watch',color:'#e11d2e',tags:[],img:'',desc:'',size:'',shade:'',origin:''};
   $('#wf').innerHTML=`<h2>${id?'Topdan məhsulu redaktə et':'Topdan məhsul əlavə et'}</h2>
    <div class="two"><label>Brend<input name="brand" required value="${esc(w.brand)}"></label><label>Model<input name="model" required value="${esc(w.model)}"></label>
-   <label>Topdan qiymət ₼<input name="price" type="number" min="0" step="any" required value="${w.price}"></label><label>Stok<input name="stock" type="number" min="0" required value="${w.stock}"></label>
+   <label>Topdan qiymət ₼<input name="price" type="number" min="0" step="any" required value="${w.price}"></label><label>Mexanizm${mechSel(w)}</label>
    <label>Forma (çəkilmiş şəkil üçün)<select name="kind">${['watch','chrono','dress','smart','band'].map(m=>`<option value="${m}" ${w.kind===m?'selected':''}>${tr(m)}</option>`).join('')}</select></label>
    <label>Rəng<input type="color" name="color" value="${w.color||'#e11d2e'}"></label></div>
    <label>Şəkil linki (və ya faylı images/topdan/ qovluğuna product-ID.jpg kimi qoyun)<input name="img" value="${w.img&&!w.img.startsWith('data:')?esc(w.img):''}" placeholder="https://..."></label>
@@ -411,7 +414,7 @@ function wsEdit(id){
     if(e.submitter&&e.submitter.value!=='save')return;
     if(busy)await busy;
     const f=new FormData($('#wf')),o=id?w:{id:Math.max(0,...WSD().products.map(x=>x.id))+1,ws:1};
-    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),stock:+f.get('stock'),kind:f.get('kind'),color:f.get('color'),
+    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),mech:f.get('mech')||'',kind:f.get('kind'),color:f.get('color'),
       img:f.get('img').trim()||photo,desc:f.get('desc').trim(),size:f.get('size').trim(),shade:f.get('shade').trim(),origin:f.get('origin').trim(),tags:f.getAll('tag'),ws:1});
     if(!id)WSD().products.push(o);DB.save();renderWS();};
   $('#dlg').showModal();
