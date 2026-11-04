@@ -55,3 +55,6 @@ header .alang,#login .alang{padding:0!important;border:0!important;background:no
 .oopen{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff7e0;border:1px solid #e9b44c;border-radius:10px;padding:10px 14px;margin:12px 0}
 .oc.hl{box-shadow:0 0 0 3px #c2476b55}
 .oc.clk{cursor:pointer}.oc.clk:hover{box-shadow:0 4px 18px #c2476b33}
+
+.bchip{display:inline-flex;align-items:center;gap:2px;background:#f6eef2;border:1px solid #e3cfd8;border-radius:20px;padding:3px 6px 3px 12px;margin:3px 6px 3px 0;font-size:.9rem}
+.bchip button{border:0;background:none;cursor:pointer;padding:2px 5px;font-size:.8rem;color:#7d6169}.bchip button:hover{color:#c2476b}

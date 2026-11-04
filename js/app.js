@@ -74,6 +74,21 @@ function albumCard(a){
   const im=a.img?`<img src="${esc(imgSrc(a.img))}" alt="${esc(an(a))}" loading="lazy">`:cover?imgTag(cover):`<img src="${productImg({kind:'watch',color:WS?'#fca5a5':'#c4b5fd'})}" alt="">`;
   return `<a class="card album" href="products.html?album=${encodeURIComponent(a.key)}">${im}<div class="ci"><span>${esc(an(a))}</span><b>${ws.length} ${t('count')}</b></div></a>`;
 }
+/* ===== BIG ALBUMS (böyük albomlar): glass frames, each holding small albums (3 per row) ===== */
+const BIGS=()=>((WS?(DB.data.wholesale||{}).bigAlbums:DB.data.bigAlbums)||[]);
+const bigItems=b=>(b.items||[]).map(k=>ALBS().find(a=>a.key===k)).filter(Boolean);
+/* hero buttons: the first two big albums (falls back to the old button when there are none) */
+function bigBtns(fb){const B=BIGS().slice(0,2);if(!B.length)return fb;return B.map(b=>`<a class="btn ghost" href="albums.html?big=${encodeURIComponent(b.key)}">${esc(an(b))}</a>`).join(' ');}
+function bigFrame(title,list,href){
+  return `<div class="bframe"><div class="head"><h2>${href?`<a href="${href}">${esc(title)}</a>`:esc(title)}</h2></div><div class="bgrid3">${list.map(albumCard).join('')}</div></div>`;
+}
+function albumsInner(h){
+  const B=BIGS().filter(b=>bigItems(b).length);
+  if(!B.length)return `<div class="head"><${h}>${t('albums')}</${h}></div><div class="grid">${ALBS().map(albumCard).join('')}</div>`;
+  const used=new Set();BIGS().forEach(b=>(b.items||[]).forEach(k=>used.add(k)));
+  const rest=ALBS().filter(a=>!used.has(a.key));
+  return `<div class="bframes">${B.map(b=>bigFrame(an(b),bigItems(b),'albums.html?big='+encodeURIComponent(b.key))).join('')}${rest.length?bigFrame(t('albums'),rest):''}</div>`;
+}
 /* hero slider */
 function sliderHTML(arr){
   const cp=s=>(s.cap&&(s.cap[L]||s.cap.en))||'';
@@ -128,11 +143,11 @@ const pages={
     :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
    <div class="hin2"><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
-   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
+   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a> ${bigBtns('')}</div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section><span id="after"></span>
    ${brands.length?`<div class="strip"><b>${t('brandsT')}</b>${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`:''}
-   ${A.length?`<section class="wrap"><div class="head"><h2>${t('albums')}</h2></div><div class="grid">${A.map(albumCard).join('')}</div></section>`:''}
+   ${A.length?`<section class="wrap">${albumsInner('h2')}</section>`:''}
    <section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>
    <section class="cta"><h2>${t('w3')}</h2><p>${t('w3d')}</p><a class="btn" href="contact.html">${t('contact')}</a></section>`;
   const vv=$('.hero.vh video');if(vv){vv.muted=true;const p=vv.play();if(p&&p.catch)p.catch(()=>{});}
@@ -155,16 +170,16 @@ const pages={
     :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   const heroHTML=classic?`<section class="hero ${full?'full':''}">${full?sl+'<div class="ov"></div>':''}<div class="hin"><div class="hcopy">
    <h1>${ttl}</h1><p>${sub}</p>
-   <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> <a class="btn ghost" href="albums.html">${t('browse')}</a></div></div>${full?'':`<div class="hvis">${sl}</div>`}</div></section>`
+   <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> ${bigBtns(`<a class="btn ghost" href="albums.html">${t('browse')}</a>`)}</div></div>${full?'':`<div class="hvis">${sl}</div>`}</div></section>`
    :`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
    <div class="hin2"><h1>${ttl}</h1><p>${sub}</p>
-   <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> <a class="btn ghost" href="albums.html">${t('browse')}</a></div></div>
+   <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> ${bigBtns(`<a class="btn ghost" href="albums.html">${t('browse')}</a>`)}</div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section>
    ${slides.length?`<section class="wrap sliderwrap">${sl}</section>`:''}<span id="after"></span>`;
   $('#main').innerHTML=heroHTML+`
    ${H.showBrands===false||!brands.length?'':`<div class="strip"><b>${t('brandsT')}</b>${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`}
-   ${on('albums')?`<section class="wrap"><div class="head"><h2>${t('albums')}</h2></div><div class="grid">${ALBS().map(albumCard).join('')}</div></section>`:''}
+   ${on('albums')?`<section class="wrap">${albumsInner('h2')}</section>`:''}
    ${on('video')&&vid?`<section class="vid"><div class="wrap"><div class="head"><h2>${t('videoT')}</h2></div><div class="vbox">${vid}</div></div></section>`:''}
    ${on('gallery')&&gal.length?`<section class="wrap"><div class="head"><h2>${t('galleryT')}</h2></div><div class="gal">${gal.map(g=>`<figure><img src="${esc(imgSrc(g.img))}" alt="${esc(gcap(g))}" loading="lazy">${gcap(g)?`<figcaption>${esc(gcap(g))}</figcaption>`:''}</figure>`).join('')}</div></section>`:''}
    ${on('why')?`<section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>`:''}
@@ -172,7 +187,11 @@ const pages={
   initSlider();lightbox();
   const vv=$('.hero.vh video');if(vv){vv.muted=true;const p=vv.play();if(p&&p.catch)p.catch(()=>{});}
  },
- albums(){$('#main').innerHTML=`<section class="wrap"><div class="head"><h1>${t('albums')}</h1></div><div class="grid">${ALBS().map(albumCard).join('')}</div>
+ albums(){
+  const bk=new URLSearchParams(location.search).get('big'),bg=bk&&BIGS().find(x=>x.key===bk);
+  if(bg){document.title=an(bg)+' · '+NAME();
+   $('#main').innerHTML=`<section class="wrap"><p class="bback"><a href="albums.html">← ${t('albums')}</a></p><div class="head"><h1>${esc(an(bg))}</h1></div>${bigItems(bg).length?`<div class="grid">${bigItems(bg).map(albumCard).join('')}</div>`:`<p style="text-align:center">${t('none')}</p>`}</section>`;return;}
+  $('#main').innerHTML=`<section class="wrap">${albumsInner('h1')}
    <p style="text-align:center;margin-top:30px"><a class="btn" href="products.html">${t('allProducts')}</a></p></section>`;},
  products(){
   const D=DB.data,p=new URLSearchParams(location.search);let k=p.get('album')||'all',sort='',qs='';

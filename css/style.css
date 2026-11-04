@@ -374,3 +374,16 @@ html.wh .hero.vh.novid{background:radial-gradient(70% 60% at 50% 100%,var(--hero
 /* header hides while scrolling down, returns when scrolling up */
 header{transition:transform .3s ease,box-shadow .3s}
 header.hide{transform:translateY(-120%)}
+
+/* ================= BIG ALBUMS: blurred glass frames (2 per row, 3 small albums per row inside) ================= */
+.bframes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;align-items:start}
+.bframe{position:relative;padding:26px 22px 22px;border-radius:30px;border:1px solid #ffffff2e;background:linear-gradient(150deg,#ffffff1f,#ffffff0a);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 24px 60px -30px #000,inset 0 1px 0 #ffffff1a}
+.bframe .head{margin-bottom:22px}.bframe .head h2{margin:0;font-size:clamp(1.5rem,2.6vw,2.1rem)}
+.bframe .head h2 a{color:inherit;text-decoration:none}.bframe .head h2 a:hover{opacity:.85}
+.bgrid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bframe .card.album{border-radius:18px}
+.bframe .card.album .ci{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 11px;font-size:clamp(.85rem,1.3vw,1.05rem);line-height:1.2}
+.bframe .card.album .ci b{font-size:.7rem;padding:2px 8px}
+.bback{margin:0 0 14px}.bback a{text-decoration:none;opacity:.85}.bback a:hover{opacity:1}
+@media(max-width:900px){.bframes{grid-template-columns:1fr}}
+@media(max-width:420px){.bgrid3{grid-template-columns:repeat(2,minmax(0,1fr))}.bframe{padding:20px 14px 16px;border-radius:24px}}

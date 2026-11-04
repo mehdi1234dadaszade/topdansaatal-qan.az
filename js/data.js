@@ -106,9 +106,14 @@ const DB = {
     if(d.products.some(w=>COS.includes(w.kind))){d.albums=JSON.parse(JSON.stringify(SEED_ALBUMS));d.products=makeProducts();this._migrated=true;}
     if(d.settings.name&&/wal+nut/i.test(d.settings.name)){delete d.settings.name;this._migrated=true;}
     d.products.forEach(w=>{w.tags=w.tags||[];});
+    d.bigAlbums=d.bigAlbums||[];d.bigAlbums.forEach(b=>{b.name=b.name||{};b.items=b.items||[];});
     /* TOPDAN (wholesale) goods: own albums + products, shown only on the /topdan/ pages */
     const W=d.wholesale=d.wholesale||{};W.albums=W.albums||[];W.products=W.products||[];W.home=W.home||{};
-    W.albums.forEach(a=>{a.name=a.name||{};});W.products.forEach(w=>{w.tags=w.tags||[];w.ws=1;});
+    W.albums.forEach(a=>{a.name=a.name||{};});W.bigAlbums=W.bigAlbums||[];W.bigAlbums.forEach(b=>{b.name=b.name||{};b.items=b.items||[];});
+    /* default big albums (created once; if you delete them later they do not come back) */
+    const seedBig=o=>{if(o.bigSeeded)return;o.bigSeeded=true;this._migrated=true;if(o.bigAlbums.length)return;
+      [['Premium Brendlər','premium-brendler'],['A Class Brendlər','a-class-brendler']].forEach(x=>o.bigAlbums.push({key:'big-'+x[1],name:{az:x[0],en:x[0],ru:x[0],tr:x[0]},items:[]}));};
+    seedBig(d);seedBig(W);W.products.forEach(w=>{w.tags=w.tags||[];w.ws=1;});
     /* store contact details (filled once; afterwards change them in Admin > Contact) */
     if(!d.settings.contactSeeded){const C=d.settings.contact=d.settings.contact||{},D={instagram:'https://www.instagram.com/topdan_saat_',tiktok:'https://www.tiktok.com/@cdvipsaat_',whatsapp:'+994501005444',address:'Sədərək Ticarət Mərkəzi, Sıra 12 Dükan 60',maps:'https://goo.gl/maps/VXDsYAnSGdWrTXEy5?g_st=aw',map:'Sədərək Ticarət Mərkəzi, Bakı'};
       for(const k in D)C[k]=D[k];if(!C.phone)C.phone='+994501005444';d.settings.contactSeeded=true;this._migrated=true;}

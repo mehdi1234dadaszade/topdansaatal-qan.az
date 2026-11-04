@@ -73,7 +73,7 @@ function editW(id){
   $('#dlg').showModal();
 }
 function renderA(){
-  $('#tab-a').innerHTML=`<form class="box" style="max-width:none" onsubmit="addA(event)"><b>${tr('New album')}</b><div class="two">
+  $('#tab-a').innerHTML=bigHTML(0)+`<form class="box" style="max-width:none" onsubmit="addA(event)"><b>${tr('New album')}</b><div class="two">
    <label>${tr('Name (Azərbaycan dili)')}<input id="a_az" required></label></div><button class="b">${tr('Add album')}</button></form>
    <p>${tr('Each album can have its own <b>cover photo</b> (shown on the home page and the Albums page). Without one, the first product photo is used.')}</p>`+
    D().albums.map(a=>`<div class="row" style="grid-template-columns:1fr"><div class="cov">${a.img?`<img src="${esc(imgSrc(a.img))}" alt="">`:'<img alt="" src="'+productImg({kind:'watch',color:'#c4b5fd'})+'">'}
@@ -81,7 +81,7 @@ function renderA(){
    <small>${tr('{n} products · key: {key}',{n:D().products.filter(w=>(w.tags||[]).includes(a.key)).length,key:esc(a.key)})}</small>
    <div class="acts" style="margin-top:6px"><label class="b s g" style="margin:0;cursor:pointer">${tr('Upload cover')}<input type="file" accept="image/*" hidden onchange="albCover('${esc(a.key)}',this.files[0])"></label>
    <button class="b s" onclick="albCoverUrl('${esc(a.key)}')">${tr('Cover from link')}</button>${a.img?`<button class="b s r" onclick="albCoverDel('${esc(a.key)}')">${tr('Remove cover')}</button>`:''}
-   <button class="b s r" onclick="delA('${esc(a.key)}')">${tr('Delete album')}</button></div></div></div></div>`).join('');
+   <button class="b s r" onclick="delA('${esc(a.key)}')">${tr('Delete album')}</button><button class="b s g" onclick="albToWs('${esc(a.key)}')">Topdan səhifəsinə tətbiq et</button>${(D().wholesale.albums||[]).some(x=>x.key===a.key)?' <small>✓ topdanda var</small>':''}</div></div></div></div>`).join('');
 }
 async function albCover(k,f){if(!f)return;try{const a=D().albums.find(x=>x.key===k);a.img=await readImg(f,900,.82);if(DB.save()){renderA();toast(tr('Cover saved ✓'));}}catch(e){alert(tr('Could not read this image.'));}}
 function albCoverUrl(k){const u=prompt(tr('Image link (https://...) or file path in your repository (images/home/cover.jpg):'));if(!u)return;D().albums.find(x=>x.key===k).img=u.trim();DB.save();renderA();toast(tr('Cover saved ✓'));}
@@ -90,7 +90,7 @@ function addA(e){e.preventDefault();let key=$('#a_az').value.trim().toLowerCase(
   while(D().albums.some(a=>a.key===key))key+='-2';
   const nm=$('#a_az').value.trim();D().albums.push({key,name:{az:nm,en:nm,ru:nm,tr:nm}});DB.save();render();}
 function delA(k){if(!confirm(tr('Delete this album? The products stay on the website.')))return;
-  D().albums=D().albums.filter(a=>a.key!==k);D().products.forEach(w=>w.tags=(w.tags||[]).filter(x=>x!==k));DB.save();render();}
+  D().albums=D().albums.filter(a=>a.key!==k);(D().bigAlbums||[]).forEach(b=>b.items=(b.items||[]).filter(x=>x!==k));D().products.forEach(w=>w.tags=(w.tags||[]).filter(x=>x!==k));DB.save();render();}
 function renderD(){
   $('#tab-d').innerHTML=`<div class="box" style="max-width:none"><h2>${tr('Home page video')}</h2><label>${tr('YouTube link')}<input id="yt" value="${esc(D().settings.youtube||'')}" placeholder="https://www.youtube.com/watch?v=..."></label><p><button class="b" onclick="saveYt()">${tr('Save video')}</button></p></div><br><div class="box" style="max-width:none"><h2>${tr('Publish your changes')}</h2>
    <p id="cl" class="${DB.cloud()?'ok':'err'}">${DB.cloud()?tr('Online database is ON: every change is saved for all visitors on all devices.'):tr('Online database is NOT set up. Changes stay only in this browser. Follow the README (Firebase) steps and fill js/config.js.')}</p>
@@ -372,7 +372,7 @@ function renderWS(){
     <label>Topdan qiymət ₼<input type="number" min="0" step="any" value="${w.price}" onchange="wsUpd(${w.id},'price',this.value)"></label>
     <label>Stok<input type="number" min="0" step="1" value="${w.stock}" onchange="wsUpd(${w.id},'stock',this.value)"></label>
     <div class="acts"><button class="b s" onclick="wsEdit(${w.id})">Redaktə</button><button class="b s r" onclick="wsDel(${w.id})">Sil</button></div></div>`).join('')||'<p>Hələ topdan məhsul yoxdur. "+ Topdan məhsul əlavə et" düyməsini basın.</p>'}
-   <div class="card2"><h2>Topdan albomlar</h2><p class="hint">Albomlar topdan səhifəsində məhsulları qruplaşdırır (məsələn: Premium modellər, İdman). Məhsulu əlavə edərkən albom seçilir.</p>
+   ${bigHTML(1)}<div class="card2"><h2>Topdan albomlar</h2><p class="hint">Albomlar topdan səhifəsində məhsulları qruplaşdırır (məsələn: Premium modellər, İdman). Məhsulu əlavə edərkən albom seçilir.</p>
    <form class="box" style="max-width:none" onsubmit="wsAddA(event)"><b>Yeni albom</b><div class="two"><label>Ad<input id="wsa_n" required></label></div><button class="b">Albom əlavə et</button></form>
    ${W.albums.map(a=>`<div class="row" style="grid-template-columns:1fr"><div class="cov">${a.img?`<img src="${esc(imgSrc(a.img))}" alt="">`:'<img alt="" src="'+productImg({kind:'watch',color:'#fca5a5',ws:1})+'">'}
     <div style="flex:1"><b>${esc(wsN(a))}</b><small>${W.products.filter(w=>(w.tags||[]).includes(a.key)).length} məhsul</small>
@@ -421,7 +421,7 @@ function wsAddA(e){e.preventDefault();const nm=$('#wsa_n').value.trim();if(!nm)r
   while(WSD().albums.some(a=>a.key===key))key+='-2';
   WSD().albums.push({key,name:{az:nm,en:nm,ru:nm,tr:nm}});DB.save();renderWS();toast('Albom əlavə olundu ✓');}
 function wsDelA(k){if(!confirm('Bu albom silinsin? Məhsullar qalır.'))return;
-  WSD().albums=WSD().albums.filter(a=>a.key!==k);WSD().products.forEach(w=>w.tags=(w.tags||[]).filter(x=>x!==k));DB.save();renderWS();}
+  WSD().albums=WSD().albums.filter(a=>a.key!==k);(WSD().bigAlbums||[]).forEach(b=>b.items=(b.items||[]).filter(x=>x!==k));WSD().products.forEach(w=>w.tags=(w.tags||[]).filter(x=>x!==k));DB.save();renderWS();}
 async function wsCover(k,f){if(!f)return;try{WSD().albums.find(x=>x.key===k).img=await readImg(f,900,.82);if(DB.save()){renderWS();toast('Üz qabığı saxlanıldı ✓');}}catch(e){alert('Bu şəkli oxumaq mümkün olmadı.');}}
 function wsCoverUrl(k){const u=prompt('Şəkil linki (https://...) və ya repozitoriyadakı fayl yolu (images/topdan/cover.jpg):');if(!u)return;WSD().albums.find(x=>x.key===k).img=u.trim();DB.save();renderWS();toast('Üz qabığı saxlanıldı ✓');}
 function wsCoverDel(k){delete WSD().albums.find(x=>x.key===k).img;DB.save();renderWS();}
@@ -455,4 +455,55 @@ async function tkMigrate(){
   if(done)DB.save();
   toast(done+' şəkil köçürüldü'+(fail?', '+fail+' alınmadı (təkrar basın)':' ✓'));
   setTimeout(tkMigBar,1500);
+}
+
+
+/* ================= BÖYÜK ALBOMLAR (big albums): groups of small albums shown as glass frames on the website ================= */
+const bigList=w=>{const o=w?D().wholesale:D();o.bigAlbums=o.bigAlbums||[];return o.bigAlbums;};
+const bigSmall=w=>w?D().wholesale.albums:D().albums;
+const bigRe=w=>w?renderWS():renderA();
+function bigHTML(w){
+  const B=bigList(w),S=bigSmall(w),nm=a=>a.name.az||a.name.en||a.key;
+  return `<div class="card2"><h2>Böyük albomlar</h2><p class="hint">Böyük albom saytda şüşə çərçivə kimi görünür, çərçivənin adı böyük albomun adı olur. Çərçivənin içində seçdiyiniz balaca albomlar yanaşı (3 sütun) göstərilir. Bir ekranda 2 çərçivə yanaşı görünür, 3-cü və 4-cü böyük albom aşağıya əlavə olunur.</p>
+   <form class="box" style="max-width:none" onsubmit="bigAdd(event,${w})"><b>Böyük albom yarat</b><div class="two"><label>Ad<input id="big_n${w}" required></label></div><button class="b">Böyük albom yarat</button></form>
+   ${B.map((b,i)=>{const items=(b.items||[]).map(k=>S.find(a=>a.key===k)).filter(Boolean),free=S.filter(a=>!(b.items||[]).includes(a.key));
+    return `<div class="row" style="grid-template-columns:1fr"><div>
+     <b>${esc(b.name.az||b.name.en||b.key)}</b> <small>Çərçivə № ${i+1} · ${items.length} balaca albom</small>
+     <div style="margin:8px 0">${items.map((a,j)=>`<span class="bchip">${esc(nm(a))}<button type="button" title="Sola" onclick="bigMoveItem(${w},'${esc(b.key)}',${j},-1)">◀</button><button type="button" title="Sağa" onclick="bigMoveItem(${w},'${esc(b.key)}',${j},1)">▶</button><button type="button" title="Çıxar" onclick="bigDelItem(${w},'${esc(b.key)}','${esc(a.key)}')">✕</button></span>`).join('')||'<small>Hələ balaca albom yoxdur. Aşağıdan əlavə edin.</small>'}</div>
+     <div class="acts"><select id="bigsel_${w}_${esc(b.key)}" style="width:auto;margin:0"><option value="">+ Balaca albom seç</option>${free.map(a=>`<option value="${esc(a.key)}">${esc(nm(a))}</option>`).join('')}</select>
+     <button class="b s g" type="button" onclick="bigAddItem(${w},'${esc(b.key)}')">Əlavə et</button>
+     <button class="b s" type="button" onclick="bigMove(${w},${i},-1)">▲ Yuxarı</button><button class="b s" type="button" onclick="bigMove(${w},${i},1)">▼ Aşağı</button>
+     <button class="b s" type="button" onclick="bigRename(${w},'${esc(b.key)}')">Adını dəyiş</button>
+     <button class="b s r" type="button" onclick="bigDel(${w},'${esc(b.key)}')">Sil</button></div></div></div>`;}).join('')||'<p>Hələ böyük albom yoxdur.</p>'}
+  </div>`;
+}
+function bigAdd(e,w){e.preventDefault();const nm=$('#big_n'+w).value.trim();if(!nm)return;
+  let key='big-'+(nm.toLowerCase().replace(/ə/g,'e').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ü/g,'u').replace(/ç/g,'c').replace(/ş/g,'s').replace(/ğ/g,'g').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||'albom');
+  while(bigList(w).some(b=>b.key===key))key+='-2';
+  bigList(w).push({key,name:{az:nm,en:nm,ru:nm,tr:nm},items:[]});DB.save();bigRe(w);toast('Böyük albom yaradıldı ✓');}
+function bigAddItem(w,k){const sel=$('#bigsel_'+w+'_'+k),v=sel&&sel.value;if(!v)return;const b=bigList(w).find(x=>x.key===k);if(!b)return;
+  b.items=b.items||[];if(!b.items.includes(v))b.items.push(v);DB.save();bigRe(w);toast('Albom əlavə olundu ✓');}
+function bigDelItem(w,k,a){const b=bigList(w).find(x=>x.key===k);if(!b)return;b.items=(b.items||[]).filter(x=>x!==a);DB.save();bigRe(w);}
+function bigMoveItem(w,k,j,d){const b=bigList(w).find(x=>x.key===k);if(!b)return;const it=b.items||[],n=j+d;
+  /* positions are counted among albums that still exist */
+  const S=bigSmall(w),ex=it.filter(x=>S.some(a=>a.key===x));if(n<0||n>=ex.length)return;[ex[j],ex[n]]=[ex[n],ex[j]];b.items=ex;DB.save();bigRe(w);}
+function bigMove(w,i,d){const L=bigList(w),n=i+d;if(n<0||n>=L.length)return;[L[i],L[n]]=[L[n],L[i]];DB.save();bigRe(w);}
+function bigRename(w,k){const b=bigList(w).find(x=>x.key===k);if(!b)return;const nm=prompt('Böyük albomun yeni adı:',b.name.az||b.name.en||'');if(!nm||!nm.trim())return;
+  const v=nm.trim();b.name={az:v,en:v,ru:v,tr:v};DB.save();bigRe(w);toast('Ad dəyişdirildi ✓');}
+function bigDel(w,k){if(!confirm('Bu böyük albom silinsin? Balaca albomlar və məhsullar qalır.'))return;
+  const o=w?D().wholesale:D();o.bigAlbums=bigList(w).filter(x=>x.key!==k);DB.save();bigRe(w);}
+
+/* Copies a main-site album and its watches to the Topdan (wholesale) site. The copies are independent: changing a price on one site never changes the other. */
+function albToWs(k){
+  const a=D().albums.find(x=>x.key===k);if(!a)return;const W=WSD();
+  const prods=D().products.filter(w=>(w.tags||[]).includes(k));
+  if(!confirm('"'+aN(a)+'" albomu və içindəki '+prods.length+' saat topdan səhifəsinə tətbiq olunsun?\n\nTopdan qiymətləri əsas saytın qiymətlərindən ayrı olacaq, biri dəyişəndə o biri dəyişməyəcək. Artıq köçürülmüş saatlara toxunulmur.'))return;
+  let wa=W.albums.find(x=>x.key===k);
+  if(!wa){wa={key:k,name:JSON.parse(JSON.stringify(a.name))};if(a.img)wa.img=a.img;W.albums.push(wa);}
+  let nid=Math.max(0,...W.products.map(x=>x.id))+1,added=0;
+  prods.forEach(w=>{
+    let c=W.products.find(x=>x.srcId===w.id);
+    if(c){c.tags=c.tags||[];if(!c.tags.includes(k))c.tags.push(k);return;}
+    c=JSON.parse(JSON.stringify(w));c.id=nid++;c.srcId=w.id;c.ws=1;c.tags=[k];W.products.push(c);added++;});
+  DB.save();render();toast('Topdan səhifəsinə tətbiq olundu ✓ ('+added+' yeni saat)');
 }
