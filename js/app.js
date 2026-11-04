@@ -63,7 +63,11 @@ function chrome(page){
     <div class="soc">${socials()}</div></div></div>
    <div class="fcopy">© ${new Date().getFullYear()} ${esc(NAME())}. ${t('rights')}</div>`;
   const up=document.createElement('button');up.className='top';up.setAttribute('aria-label','Yuxarı');up.textContent='↑';up.onclick=()=>scrollTo({top:0,behavior:'smooth'});document.body.appendChild(up);
-  const sc=()=>{$('#hdr').classList.toggle('sc',scrollY>10);up.classList.toggle('show',scrollY>600);};addEventListener('scroll',sc,{passive:true});sc();
+  let ly=scrollY;
+  const sc=()=>{const h=$('#hdr'),y=scrollY;h.classList.toggle('sc',y>10);up.classList.toggle('show',y>600);
+   /* scroll down -> header hides; scroll up (or at the top) -> it comes back */
+   if(!document.body.classList.contains('mopen')){if(y<=80||y<ly-6)h.classList.remove('hide');else if(y>ly+6)h.classList.add('hide');}
+   if(Math.abs(y-ly)>6)ly=y;};addEventListener('scroll',sc,{passive:true});sc();
 }
 function albumCard(a){
   const ws=PRODS().filter(w=>inAlbum(w,a.key)),cover=ws[0];
