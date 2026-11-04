@@ -20,7 +20,7 @@ async function login(e){e.preventDefault();const cr=await adminCred(),code=$('#p
 window.onCloud=(ok,m)=>{const b=$('#cl');if(ok){toast(tr('Saved online ✓'));}else{toast(tr('Could not save online: {e}',{e:m||''}));}if(b)b.dataset.s=ok?'1':'0';};
 function logout(){sessionStorage.removeItem('tk_admin');location.reload();}
 async function start(){
-  trStatic();$('#login').hidden=true;$('#app').hidden=false;await DB.load(true);render();if(DB._cloudNew&&DB.cloud()){DB._cloudNew=false;DB.save();}if(DB._migrated){DB._migrated=false;DB.save();}
+  trStatic();$('#login').hidden=true;$('#app').hidden=false;await DB.load(true);render();tkMigBar();if(DB._cloudNew&&DB.cloud()){DB._cloudNew=false;DB.save();}if(DB._migrated){DB._migrated=false;DB.save();}
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','z','o','u','q','h','a','s','c','k','x','d','g'].forEach(k=>$('#tab-'+k).hidden=k!==b.dataset.t);if(b.dataset.t==='o')renderO();if(b.dataset.t==='u')renderU();});
@@ -61,11 +61,11 @@ function editW(id){
    <div class="chk"><b>${tr('Albums')}</b><br>${D().albums.map(a=>`<label><input type="checkbox" name="tag" value="${esc(a.key)}" ${(w.tags||[]).includes(a.key)?'checked':''}> ${esc(aN(a))}</label>`).join('')}</div>
    <p class="acts"><button class="b" value="save">${tr('Save')}</button><button class="b s r" value="cancel" formnovalidate>${tr('Cancel')}</button></p>`;
   let photo=w.img&&w.img.startsWith('data:')?w.img:'';
-  $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
-    const s=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;
-    c.getContext('2d').drawImage(im,0,0,c.width,c.height);photo=c.toDataURL('image/jpeg',.8);};im.src=r.result;};r.readAsDataURL(f);};
-  $('#wf').onsubmit=e=>{
+  let busy=null;
+  $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;busy=readImg(f,600,.82).then(d=>{photo=d;}).catch(()=>{});};
+  $('#wf').onsubmit=async e=>{
     if(e.submitter&&e.submitter.value!=='save')return;
+    if(busy)await busy;
     const f=new FormData($('#wf')),o=id?w:{id:Math.max(0,...D().products.map(x=>x.id))+1};
     Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),stock:+f.get('stock'),kind:f.get('kind'),color:f.get('color'),
       img:f.get('img').trim()||photo,desc:f.get('desc').trim(),size:f.get('size').trim(),shade:f.get('shade').trim(),origin:f.get('origin').trim(),tags:f.getAll('tag')});
@@ -428,3 +428,31 @@ function wsCoverDel(k){delete WSD().albums.find(x=>x.key===k).img;DB.save();rend
 function wsSaveHome(){WSD().home={title:$('#wsh_t').value.trim(),sub:$('#wsh_s').value.trim(),featuredIds:[...document.querySelectorAll('#tab-z [data-wfid]:checked')].map(c=>+c.dataset.wfid)};DB.save();toast('Saxlanıldı ✓');}
 function wsSavePw(e){e.preventDefault();const v=$('#wsp').value.trim();if(v.length<4){alert('Parol ən azı 4 simvol olmalıdır.');return;}D().settings.wholesaleKey=tkHash(v);DB.save();toast('Parol dəyişdirildi ✓');renderWS();}
 function wsResetPw(){if(!confirm('İlkin parola qayıdılsın?'))return;delete D().settings.wholesaleKey;DB.save();toast('İlkin parola qayıdıldı ✓');renderWS();}
+
+/* ===== move old photos (saved inside Firebase as long text) to Cloudinary ===== */
+function tkB64(o,acc){acc=acc||[];if(o&&typeof o==='object'){for(const k in o){const v=o[k];if(typeof v==='string'){if(/^data:image\/(jpeg|png|webp|gif);base64,/.test(v))acc.push([o,k]);}else tkB64(v,acc);}}return acc;}
+function tkMigBar(){
+  const I=window.TK_IMG;if(!I||!I.cloud||!I.preset)return;const n=tkB64(DB.data).length;const old=document.getElementById('migbar');if(old)old.remove();if(!n)return;
+  const d=document.createElement('div');d.id='migbar';d.style.cssText='background:#fff7d6;color:#3b2f00;border:1px solid #e6c84d;border-radius:12px;padding:14px 16px;margin:0 0 16px;font:14px/1.5 system-ui,sans-serif';
+  d.innerHTML='<b>'+n+' şəkil hələ Firebase-in içindədir.</b> Onları Cloudinary-yə köçürsəniz Firebase yaddaşı çox azalacaq və sayt sürətlənəcək. Başlamazdan əvvəl ehtiyat surət (tk-backup.json) avtomatik endiriləcək. Proses bitənə qədər səhifəni bağlamayın. <button class="b" id="migbtn" style="margin-left:8px">Şəkilləri köçür</button>';
+  document.querySelector('#app main').prepend(d);document.getElementById('migbtn').onclick=tkMigrate;
+}
+async function tkMigrate(){
+  const I=window.TK_IMG,btn=document.getElementById('migbtn');btn.disabled=true;
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(DB.data)],{type:'application/json'}));a.download='tk-backup.json';a.click();}catch(e){}
+  const items=tkB64(DB.data),map=new Map();let done=0,fail=0;
+  for(const [o,k] of items){const v=o[k];
+    if(!map.has(v)){
+      try{const fd=new FormData();fd.append('file',v);fd.append('upload_preset',I.preset);
+        const r=await fetch('https://api.cloudinary.com/v1_1/'+I.cloud+'/image/upload',{method:'POST',body:fd}),j=await r.json();
+        if(!r.ok||!j.secure_url)throw new Error((j.error&&j.error.message)||'upload');
+        map.set(v,j.secure_url.replace('/upload/','/upload/f_auto,q_auto/'));}
+      catch(e){map.set(v,null);}
+    }
+    if(map.get(v)){o[k]=map.get(v);done++;}else fail++;
+    btn.textContent=(done+fail)+' / '+items.length+' ...';
+  }
+  if(done)DB.save();
+  toast(done+' şəkil köçürüldü'+(fail?', '+fail+' alınmadı (təkrar basın)':' ✓'));
+  setTimeout(tkMigBar,1500);
+}

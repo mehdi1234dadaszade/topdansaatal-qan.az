@@ -90,6 +90,10 @@ const flagImg=(l,h=15)=>`<img class="flag" src="${FLAGS[l]}" alt="" width="${Mat
 const PRODS=()=>WS?DB.data.wholesale.products:DB.data.products;
 const ALBS=()=>WS?DB.data.wholesale.albums:DB.data.albums;
 const CLOUD=window.TK_CLOUD||{};
+/* tiny IndexedDB cache (much bigger than localStorage, so the whole shop copy fits) */
+const IDBC={_o(){return new Promise((ok,no)=>{try{const r=indexedDB.open('tkc',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>ok(r.result);r.onerror=()=>no();}catch(e){no();}});},
+ async get(k){try{const d=await this._o();return await new Promise(ok=>{const q=d.transaction('k').objectStore('k').get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null);});}catch(e){return null;}},
+ async set(k,v){try{const d=await this._o();d.transaction('k','readwrite').objectStore('k').put(v,k);}catch(e){}}};
 const DB = {
   data:null, auth:null, _t:null,
   cloud(){return String(CLOUD.databaseURL||'').trim().replace(/\/+$/,'');},
@@ -112,13 +116,21 @@ const DB = {
     const st=d.settings; if(st.texts)delete st.texts.ur;
     const h=st.home; if(h){['title','sub'].forEach(k=>{if(h[k])delete h[k].ur;});(h.slides||[]).concat(h.gallery||[]).forEach(x=>{if(x.cap)delete x.cap.ur;});}
   },
+  async refresh(){ /* background check: returns true only when the shop data really changed */
+    try{const r=await fetch(this.cloud()+'/store.json',{cache:'no-store'});if(!r.ok)return false;
+      const tx=await r.text(),j=JSON.parse(tx);if(!j||!j.products)return false;
+      IDBC.set('store',{t:Date.now(),s:tx});return tx!==this._raw;}catch(e){return false;}
+  },
   _local(){try{const s=localStorage.getItem('tk_data');if(s)return JSON.parse(s);}catch(e){}return null;},
   async _file(){try{const r=await fetch(ROOT+'store.json',{cache:'no-store'});if(r.ok)return await r.json();}catch(e){}return null;},
   async _l(admin){
     if(this.cloud()){
       let ok=false;
+      /* FAST PATH (visitors): show the copy saved in this browser at once; re-check Firebase only every 10 minutes */
+      if(!admin){const c=await IDBC.get('store');
+        if(c&&c.s){try{const j=JSON.parse(c.s);if(j&&j.products){this.data=j;this._raw=c.s;this._stale=Date.now()-c.t>600000;return;}}catch(e){}}}
       try{const r=await fetch(this.cloud()+'/store.json',{cache:'no-store'});
-        if(r.ok){ok=true;const j=await r.json();if(j&&j.products){this.data=j;try{localStorage.setItem('tk_data',JSON.stringify(j));}catch(e){}return;}}}catch(e){}
+        if(r.ok){ok=true;const tx=await r.text(),j=JSON.parse(tx);if(j&&j.products){this.data=j;this._raw=tx;if(admin){try{localStorage.setItem('tk_data',tx);}catch(e){}}else IDBC.set('store',{t:Date.now(),s:tx});return;}}}catch(e){}
       if(ok){ /* cloud reachable but still empty: first run */
         const l=admin?this._local():null; if(l){this.data=l;this._cloudNew=true;return;}
         const f=await this._file(); if(f){this.data=f;this._cloudNew=!!admin;return;}
@@ -168,4 +180,11 @@ const DB = {
 const imgSrc=u=>/^(https?:|data:|\/\/|\/)/.test(u||'')?u:ROOT+u;
 function readImg(f,max=1400,q=.82){return new Promise((ok,no)=>{const r=new FileReader();r.onerror=no;r.onload=()=>{const im=new Image();im.onerror=no;im.onload=()=>{
   const s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
-  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',q));};im.src=r.result;};r.readAsDataURL(f);});}
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+  const I=window.TK_IMG;
+  if(!I||!I.cloud||!I.preset){ok(c.toDataURL('image/jpeg',q));return;}   /* no Cloudinary set: old behaviour (photo saved inside Firebase) */
+  c.toBlob(async b=>{try{const fd=new FormData();fd.append('file',b,'photo.jpg');fd.append('upload_preset',I.preset);
+    const rs=await fetch('https://api.cloudinary.com/v1_1/'+I.cloud+'/image/upload',{method:'POST',body:fd}),j=await rs.json();
+    if(!rs.ok||!j.secure_url)throw new Error((j.error&&j.error.message)||'upload');
+    ok(j.secure_url.replace('/upload/','/upload/f_auto,q_auto/'));}   /* short link only -> Firebase stays small */
+  catch(e){alert('Şəkil Cloudinary-yə yüklənmədi: '+e.message);no(e);}},'image/jpeg',q);};im.src=r.result;};r.readAsDataURL(f);});}

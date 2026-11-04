@@ -121,7 +121,7 @@ const pages={
   let f=(H.featuredIds||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=P.slice().reverse().slice(0,8);
   const brands=[...new Set(P.map(w=>w.brand))],yb=ytId(Z.bgYoutube),ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
-    :`<video autoplay muted loop playsinline preload="auto" ${Z.poster?`poster="${esc(imgSrc(Z.poster))}"`:''}><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
+    :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
    <div class="hin2"><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
    <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
@@ -148,7 +148,7 @@ const pages={
    ttl=esc((H.title&&H.title[L])||t('heroT')),sub=esc((H.sub&&H.sub[L])||t('heroS')),yb=ytId(Z.bgYoutube),
    ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
-    :`<video autoplay muted loop playsinline preload="auto" ${Z.poster?`poster="${esc(imgSrc(Z.poster))}"`:''}><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
+    :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   const heroHTML=classic?`<section class="hero ${full?'full':''}">${full?sl+'<div class="ov"></div>':''}<div class="hin"><div class="hcopy">
    <h1>${ttl}</h1><p>${sub}</p>
    <div class="hbtns"><a class="btn" href="topdan/index.html" onclick="return wsOpen(event)">${t('wsBtn')}</a> <a class="btn ghost" href="albums.html">${t('browse')}</a></div></div>${full?'':`<div class="hvis">${sl}</div>`}</div></section>`
@@ -215,4 +215,6 @@ const pages={
   const boot=()=>{chrome(page); fab(); if(window.tkWaBanner)tkWaBanner();
    (pages[page]||EXTRA_PAGES[page]||(()=>{}))();fx();};
   if(WS&&!wsOK())wsAsk(boot,true); else boot();
+  /* if the cached copy is older than 10 min, check Firebase quietly; reload only if the shop data changed */
+  if(DB._stale&&DB.cloud())DB.refresh().then(ch=>{if(ch)location.reload();});
 })();
