@@ -107,10 +107,10 @@ function meterLocal(){const n=(localStorage.getItem('tk_data')||'').length,p=Mat
 /* storage box: with the online database (Firebase) the real space is the database, not the ~5 MB browser cache */
 function meter(){return DB.cloud()?meterCloud():meterLocal();}
 function meterCloud(){
-  const n=new Blob([JSON.stringify(D())]).size,mb=n/1048576,p=Math.max(1,Math.min(100,Math.round(mb/1024*100))),
-        pages=mb>0?Math.floor(10240/mb):0,fmt=String(pages).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+  const dv=DB.derive(D()),n=new Blob([JSON.stringify(dv)]).size,mb=n/1048576,cm=new Blob([JSON.stringify(dv._c)]).size/1048576,p=Math.max(1,Math.min(100,Math.round(mb/1024*100))),
+        pages=cm>0?Math.floor(10240/cm):0,fmt=String(pages).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
   return `<div class="meter"><i style="width:${p}%"></i></div>${tr('{mb} MB used of the 1024 MB free online database space ({p}%)',{mb:mb.toFixed(2),p:p})}
-   <p style="font-size:.9rem;color:#7d6169;margin:.5rem 0 0">${tr('Every page opening downloads this data. With the free plan limit of 10 GB downloads per month that is about {n} page openings.',{n:fmt})}</p>`;}
+   <p style="font-size:.9rem;color:#7d6169;margin:.5rem 0 0">${tr('A new visitor downloads about {kb} KB when opening the home page (later visits use the copy saved in the browser). With the free plan limit of 10 GB downloads per month that is about {n} first visits.',{kb:(cm*1024).toFixed(0),n:fmt})}</p>`;}
 function storageNote(){
   if(!DB.cloud())return `<p style="font-size:.9rem;color:#7d6169">${tr('Uploaded photos live inside your browser (about 5 MB available) and inside store.json. If it fills up, put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields instead.')}</p>`;
   return `<p style="font-size:.9rem;color:#7d6169">${tr('Photos you upload are saved in the online database (Firebase), so the browser limit of about 5 MB does not stop you from uploading. But the photos are part of the data every visitor downloads. For many photos the best way is: put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields.')}</p>`;}
