@@ -254,7 +254,7 @@ function orderDoc(o){
     const cat=p?ALL.filter(a=>(p.tags||[]).includes(a.key)).map(aN).join(', '):'',sale=+i.price>+i.unit+0.004;
     return `<div class="it"><div class="ph">${imgTag(pr,esc(i.brand+' '+i.model))}</div><div class="inf"><h2>${esc(i.brand)} ${esc(i.model)}</h2>
      <p class="pp">${fm(i.unit)}${sale?` <s>${fm(i.price)}</s>`:''} × ${esc(i.q)} = <b>${fm(i.unit*i.q)}</b></p>
-     <table>${row('Marka',i.brand)}${row('Model',i.model)}${row('Albom',cat)}${row('Ölçü',p&&p.size)}${row('Rəng / çalar',p&&p.shade)}${row('Mənşə',p&&p.origin)}${row('Mexanizm',p&&p.mech)}${row('Təsvir',p&&p.desc)}${row('Məhsulun nömrəsi','#'+i.id)}${p?row('Anbarda qalıb',p.stock+' ədəd'):''}</table></div></div>`;}).join('');
+     <table>${row('Marka',i.brand)}${row('Model',i.model)}${row('Albom',cat)}${row('Ölçü',p&&p.size)}${row('Rəng / çalar',p&&p.shade)}${row('Mənşə',p&&p.origin)}${row('Mexanizm',p&&p.mech)}${row('Təsvir',p&&p.desc)}${row('Məhsulun nömrəsi','#'+i.id)}</table></div></div>`;}).join('');
   const css='*{box-sizing:border-box}body{margin:0;background:#f6eef1;color:#2a1722;font-family:system-ui,Segoe UI,Arial,sans-serif;line-height:1.5}.wrap{max-width:980px;margin:0 auto;padding:22px 16px 50px}'
    +'.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;margin-bottom:14px}h1{margin:0;font-size:1.6rem}.top p{margin:4px 0 0;color:#7d6169}'
    +'.tg{display:inline-block;background:#3b2140;color:#fff;border-radius:99px;padding:5px 14px;font-weight:600;margin-left:6px}.tg.w{background:#b3261e}'

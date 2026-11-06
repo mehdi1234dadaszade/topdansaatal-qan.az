@@ -27,7 +27,7 @@ function socials(){const c=CT();
 const CT=()=>{const C=DB.data.settings.contact||{},ph=C.phone||'';
  return {ph,tel:ph.replace(/[^\d+]/g,''),ad:C.address||'',mp:C.maps||'',
   ig:C.instagram||'',tk:C.tiktok||'',wa:C.whatsapp||'',yt:C.youtube||'',q:C.map||''};};
-const card=w=>`<a class="card" href="product.html?id=${w.id}">${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div>${w.stock>0?`<button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button>`:''}</a>`;
+const card=w=>`<a class="card" href="product.html?id=${w.id}">${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div><button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button></a>`;
 const inAlbum=(w,k)=>k==='all'||(w.tags||[]).includes(k);
 
 /* header: hide the centered text if there is no room for it (never overlaps logo or buttons) */
