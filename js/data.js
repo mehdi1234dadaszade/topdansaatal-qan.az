@@ -94,6 +94,9 @@ const CLOUD=window.TK_CLOUD||{};
 const IDBC={_o(){return new Promise((ok,no)=>{try{const r=indexedDB.open('tkc',1);r.onupgradeneeded=()=>r.result.createObjectStore('k');r.onsuccess=()=>ok(r.result);r.onerror=()=>no();}catch(e){no();}});},
  async get(k){try{const d=await this._o();return await new Promise(ok=>{const q=d.transaction('k').objectStore('k').get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null);});}catch(e){return null;}},
  async set(k,v){try{const d=await this._o();d.transaction('k','readwrite').objectStore('k').put(v,k);}catch(e){}}};
+/* SPLIT LOADING: Firebase keeps (1) the full shop copy (used by the admin), (2) _c = everything except the product lists, (3) _p = the product lists split per album, (4) _v = version stamp.
+   Visitors read only _v (a few bytes), _c (small) and the one album they open - not the whole shop. */
+const SHK=k=>'s'+tkHash(k||'_n');                 /* shard name: safe characters for Firebase keys */
 const DB = {
   data:null, auth:null, _t:null,
   cloud(){return String(CLOUD.databaseURL||'').trim().replace(/\/+$/,'');},
@@ -122,6 +125,12 @@ const DB = {
     const h=st.home; if(h){['title','sub'].forEach(k=>{if(h[k])delete h[k].ur;});(h.slides||[]).concat(h.gallery||[]).forEach(x=>{if(x.cap)delete x.cap.ur;});}
   },
   async refresh(){ /* background check: returns true only when the shop data really changed */
+    if(this._split){ /* split mode: ask only for the tiny version stamp; download the core again only if it changed */
+      try{const r=await fetch(this.cloud()+'/store/_v.json',{cache:'no-store'});if(!r.ok)return false;const v=await r.json();
+        if(v==null||v===this.data._v){IDBC.set('core',{t:Date.now(),s:this._raw});return false;}
+        const r2=await fetch(this.cloud()+'/store/_c.json',{cache:'no-store'});if(!r2.ok)return false;const tx=await r2.text(),j=JSON.parse(tx);
+        if(!j||!j._ix)return false;IDBC.set('core',{t:Date.now(),s:tx});return true;}catch(e){return false;}
+    }
     try{const r=await fetch(this.cloud()+'/store.json',{cache:'no-store'});if(!r.ok)return false;
       const tx=await r.text(),j=JSON.parse(tx);if(!j||!j.products)return false;
       IDBC.set('store',{t:Date.now(),s:tx});return tx!==this._raw;}catch(e){return false;}
@@ -131,11 +140,13 @@ const DB = {
   async _l(admin){
     if(this.cloud()){
       let ok=false;
+      if(!admin&&await this._lc())return;          /* split mode: small core + per-album product lists */
       /* FAST PATH (visitors): show the copy saved in this browser at once; re-check Firebase only every 10 minutes */
       if(!admin){const c=await IDBC.get('store');
         if(c&&c.s){try{const j=JSON.parse(c.s);if(j&&j.products){this.data=j;this._raw=c.s;this._stale=Date.now()-c.t>600000;return;}}catch(e){}}}
       try{const r=await fetch(this.cloud()+'/store.json',{cache:'no-store'});
-        if(r.ok){ok=true;const tx=await r.text(),j=JSON.parse(tx);if(j&&j.products){this.data=j;this._raw=tx;if(admin){try{localStorage.setItem('tk_data',tx);}catch(e){}}else IDBC.set('store',{t:Date.now(),s:tx});return;}}}catch(e){}
+        if(r.ok){ok=true;let tx=await r.text(),j=JSON.parse(tx);if(j&&j.products){const had=!!(j._c&&j._p);delete j._c;delete j._p;delete j._v;if(had)tx=JSON.stringify(j);else if(admin)this._needIdx=true;   /* admin works on the clean copy; the split copy is rebuilt on every save */
+          this.data=j;this._raw=tx;if(admin){try{localStorage.setItem('tk_data',tx);}catch(e){}}else IDBC.set('store',{t:Date.now(),s:tx});return;}}}catch(e){}
       if(ok){ /* cloud reachable but still empty: first run */
         const l=admin?this._local():null; if(l){this.data=l;this._cloudNew=true;return;}
         const f=await this._file(); if(f){this.data=f;this._cloudNew=!!admin;return;}
@@ -145,6 +156,53 @@ const DB = {
     } else { const l=this._local(); if(l){this.data=l;return;} }
     const f=await this._file(); if(f){this.data=f;return;}
     this.data={albums:SEED_ALBUMS,products:makeProducts()};
+  },
+  /* ---- split loading: visitor side ---- */
+  async _lc(){
+    const c=await IDBC.get('core');
+    if(c&&c.s){try{const j=JSON.parse(c.s);if(j&&j._ix){this._setCore(j,c.s);this._stale=Date.now()-c.t>600000;return true;}}catch(e){}}
+    try{const r=await fetch(this.cloud()+'/store/_c.json',{cache:'no-store'});
+      if(r.ok){const tx=await r.text();if(tx&&tx!=='null'){const j=JSON.parse(tx);if(j&&j._ix){IDBC.set('core',{t:Date.now(),s:tx});this._setCore(j,tx);return true;}}}}catch(e){}
+    return false;
+  },
+  _setCore(j,tx){j.products=[];(j.wholesale=j.wholesale||{}).products=[];this.data=j;this._raw=tx;this._split=true;this._have={};},
+  ix(){return this._split?this.data._ix[WS?'w':'m']:null;},
+  /* load only the product lists that the page needs: {albums:[key],ids:[id],all:true} */
+  async need(o){
+    if(!this._split)return;
+    const side=WS?'w':'m',x=this.data._ix[side];let hs=[];
+    if(o.all)hs=x.sh.slice();
+    (o.albums||[]).forEach(k=>hs.push(SHK(k)));
+    (o.ids||[]).forEach(id=>{const h=x.idAlb[id];if(h)hs.push(h);});
+    hs=[...new Set(hs)].filter(h=>x.sh.includes(h)&&!this._have[side+h]);
+    await Promise.all(hs.map(h=>this._shard(side,h)));
+  },
+  async _shard(side,h){
+    const v=this.data._v,ck='p:'+side+h;let l=null;
+    const c=await IDBC.get(ck);if(c&&c.v===v&&Array.isArray(c.l))l=c.l;
+    if(!l){try{const r=await fetch(this.cloud()+'/store/_p/'+side+'/'+h+'.json',{cache:'no-store'});if(r.ok){const j=await r.json();l=Array.isArray(j)?j:(j&&typeof j==='object'?Object.values(j):null);}}catch(e){}
+      if(l)IDBC.set(ck,{v,l});}
+    if(!l)return;
+    const arr=side==='w'?this.data.wholesale.products:this.data.products;
+    l.forEach(w=>{if(!w)return;w.tags=w.tags||[];if(side==='w')w.ws=1;if(!arr.some(x=>x.id===w.id))arr.push(w);});
+    arr.sort((a,b)=>(a._o||0)-(b._o||0));this._have[side+h]=1;
+  },
+  /* ---- split loading: admin side (built on every save) ---- */
+  derive(d){
+    const mk=(P,A,fid,auto,ws)=>{
+      const x={n:{},cov:{},feat:[],brands:[],idAlb:{},sh:[]},sh={};
+      P.forEach((w,i)=>{const c=Object.assign({},w,{_o:i});if(ws)c.ws=1;const tg=(w.tags&&w.tags.length)?w.tags:[null];tg.forEach(k=>{const h=SHK(k);(sh[h]=sh[h]||[]).push(c);});x.idAlb[w.id]=SHK(tg[0]);});
+      A.forEach(a=>{const l=P.filter(w=>(w.tags||[]).includes(a.key));x.n[a.key]=l.length;if(l[0])x.cov[a.key]={id:l[0].id,img:l[0].img||'',kind:l[0].kind,color:l[0].color};});
+      let f=(fid||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=auto(P);
+      x.feat=f.map(w=>{const c=Object.assign({},w);if(ws)c.ws=1;return c;});
+      x.brands=[...new Set(P.map(w=>w.brand))];x.sh=Object.keys(sh);return {x,sh};
+    };
+    const W=d.wholesale||{},H=(d.settings||{}).home||{};
+    const m=mk(d.products||[],d.albums||[],H.featuredIds,P=>P.slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8),false);
+    const w=mk(W.products||[],W.albums||[],(W.home||{}).featuredIds,P=>P.slice().reverse().slice(0,8),true);
+    const v=Date.now(),core=JSON.parse(JSON.stringify(d));delete core.products;if(core.wholesale)delete core.wholesale.products;
+    core._ix={m:m.x,w:w.x};core._v=v;
+    return Object.assign({},d,{_c:core,_p:{m:m.sh,w:w.sh},_v:v});
   },
   save(){
     let okLocal=true;
@@ -157,7 +215,7 @@ const DB = {
     const note=window.onCloud||(()=>{});
     try{
       const tok=await this.token();
-      const r=await fetch(this.cloud()+'/store.json'+(tok?'?auth='+encodeURIComponent(tok):''),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.data)});
+      const r=await fetch(this.cloud()+'/store.json'+(tok?'?auth='+encodeURIComponent(tok):''),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.derive(this.data))});
       if(!r.ok)throw new Error(r.status===401||r.status===403?'denied':'HTTP '+r.status);
       note(true);
     }catch(e){note(false,e.message);}

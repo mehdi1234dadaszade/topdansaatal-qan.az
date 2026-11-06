@@ -20,7 +20,7 @@ async function login(e){e.preventDefault();const cr=await adminCred(),code=$('#p
 window.onCloud=(ok,m)=>{const b=$('#cl');if(ok){toast(tr('Saved online ✓'));}else{toast(tr('Could not save online: {e}',{e:m||''}));}if(b)b.dataset.s=ok?'1':'0';};
 function logout(){sessionStorage.removeItem('tk_admin');location.reload();}
 async function start(){
-  trStatic();$('#login').hidden=true;$('#app').hidden=false;await DB.load(true);render();tkMigBar();if(DB._cloudNew&&DB.cloud()){DB._cloudNew=false;DB.save();}if(DB._migrated){DB._migrated=false;DB.save();}
+  trStatic();$('#login').hidden=true;$('#app').hidden=false;await DB.load(true);render();tkMigBar();if(DB._cloudNew&&DB.cloud()){DB._cloudNew=false;DB.save();}if(DB._migrated||DB._needIdx){DB._migrated=false;DB._needIdx=false;DB.save();}
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','z','o','u','q','h','a','s','c','k','x','d','g'].forEach(k=>$('#tab-'+k).hidden=k!==b.dataset.t);if(b.dataset.t==='o')renderO();if(b.dataset.t==='u')renderU();});

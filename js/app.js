@@ -70,9 +70,10 @@ function chrome(page){
    if(Math.abs(y-ly)>6)ly=y;};addEventListener('scroll',sc,{passive:true});sc();
 }
 function albumCard(a){
-  const ws=PRODS().filter(w=>inAlbum(w,a.key)),cover=ws[0];
+  const X=DB.ix();let cnt,cover;
+  if(X){cnt=X.n[a.key]||0;cover=X.cov[a.key];if(cover&&WS)cover.ws=1;}else{const ws=PRODS().filter(w=>inAlbum(w,a.key));cnt=ws.length;cover=ws[0];}
   const im=a.img?`<img src="${esc(imgSrc(a.img))}" alt="${esc(an(a))}" loading="lazy">`:cover?imgTag(cover):`<img src="${productImg({kind:'watch',color:WS?'#fca5a5':'#c4b5fd'})}" alt="">`;
-  return `<a class="card album" href="products.html?album=${encodeURIComponent(a.key)}">${im}<div class="ci"><span>${esc(an(a))}</span><b>${ws.length} ${t('count')}</b></div></a>`;
+  return `<a class="card album" href="products.html?album=${encodeURIComponent(a.key)}">${im}<div class="ci"><span>${esc(an(a))}</span><b>${cnt} ${t('count')}</b></div></a>`;
 }
 /* ===== BIG ALBUMS (böyük albomlar): glass frames, each holding small albums (3 per row) ===== */
 const BIGS=()=>((WS?(DB.data.wholesale||{}).bigAlbums:DB.data.bigAlbums)||[]);
@@ -137,8 +138,8 @@ function wsOpen(e){if(e)e.preventDefault();const go=()=>{location.href='topdan/i
 const pages={
  windex(){
   const D=DB.data,H=D.wholesale.home||{},Z=DS(),P=PRODS(),A=ALBS(),on=Z.heroMode!=='classic';
-  let f=(H.featuredIds||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=P.slice().reverse().slice(0,8);
-  const brands=[...new Set(P.map(w=>w.brand))],yb=ytId(Z.bgYoutube),ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
+  const X=DB.ix();let f=X?X.feat:(H.featuredIds||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!X&&!f.length)f=P.slice().reverse().slice(0,8);
+  const brands=X?X.brands:[...new Set(P.map(w=>w.brand))],yb=ytId(Z.bgYoutube),ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
     :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/store.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
@@ -155,9 +156,9 @@ const pages={
  index(){
   if(WS)return pages.windex();
   const D=DB.data,H=D.settings.home||{},on=k=>!(H.show&&H.show[k]===false);
-  let f=(H.featuredIds||[]).map(id=>PRODS().find(w=>w.id===id)).filter(Boolean);
-  if(!f.length)f=PRODS().slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8);
-  const auto=[...new Set(PRODS().map(w=>w.brand))],custom=(H.brands||'').split(',').map(x=>x.trim()).filter(Boolean),brands=custom.length?custom:auto;
+  const X=DB.ix();let f=X?X.feat:(H.featuredIds||[]).map(id=>PRODS().find(w=>w.id===id)).filter(Boolean);
+  if(!X&&!f.length)f=PRODS().slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8);
+  const auto=X?X.brands:[...new Set(PRODS().map(w=>w.brand))],custom=(H.brands||'').split(',').map(x=>x.trim()).filter(Boolean),brands=custom.length?custom:auto;
   const m=ytId(D.settings.youtube),v2=(D.settings.design||{}).video2||'';
   const vid=m?`<iframe src="https://www.youtube.com/embed/${m}" allowfullscreen title="Video" loading="lazy"></iframe>`
    :v2?`<video controls playsinline preload="metadata"><source src="${esc(imgSrc(v2))}" onerror="this.closest('section').remove()"></video>`:'';
@@ -199,7 +200,7 @@ const pages={
    if(sort==='lo')l.sort((a,b)=>a.price-b.price);if(sort==='hi')l.sort((a,b)=>b.price-a.price);
    $('#list').innerHTML=l.length?l.map(card).join(''):`<p>${t('none')}</p>`;$('#cnt').textContent=l.length+' '+t('count');
    $('#chips').innerHTML=[{key:'all',name:{az:t('all')}},...ALBS()].map(a=>`<button class="chip ${a.key===k?'on':''}" data-k="${esc(a.key)}">${esc(an(a))}</button>`).join('');
-   document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{k=b.dataset.k;draw();});};
+   document.querySelectorAll('.chip').forEach(b=>b.onclick=async()=>{k=b.dataset.k;await DB.need(k==='all'?{all:true}:{albums:[k]});draw();});};
   $('#main').innerHTML=`<section class="wrap"><div class="head"><h1>${t(WS?'wsProducts':'allProducts')}</h1></div><div class="tools"><input id="qs" type="search" placeholder="${esc(t('search'))}" aria-label="${esc(t('search'))}"><div id="chips"></div>
    <select id="sort"><option value="">${t('price')}</option><option value="lo">${t('sortLow')}</option><option value="hi">${t('sortHigh')}</option></select></div><p class="cnt" id="cnt"></p><div id="list" class="grid"></div></section>`;
   $('#sort').onchange=e=>{sort=e.target.value;draw();};$('#qs').oninput=e=>{qs=e.target.value.trim().toLowerCase();draw();};draw();
@@ -235,6 +236,12 @@ const pages={
 (async()=>{
   const page=document.body.dataset.page;
   await DB.load(); if(!WS)applyTheme();
+  /* load only the products this page needs (the album that is opened / the product / the basket) */
+  if(DB._split){try{const q=new URLSearchParams(location.search),ids=[...CART.items().map(c=>c.id),...CART.saved()];
+    if(page==='products'){const k=q.get('album')||'all';await DB.need(k==='all'?{all:true}:{albums:[k],ids});}
+    else if(page==='product')await DB.need({ids:[+q.get('id')].concat(ids)});
+    else if(page==='account')await DB.need({all:true});
+    else await DB.need({ids});}catch(e){}}
   const boot=()=>{chrome(page); fab(); if(window.tkWaBanner)tkWaBanner();
    (pages[page]||EXTRA_PAGES[page]||(()=>{}))();fx();};
   if(WS&&!wsOK())wsAsk(boot,true); else boot();
