@@ -244,15 +244,19 @@ const GEO={
     navigator.geolocation.getCurrentPosition(p=>res({la:p.coords.latitude,lo:p.coords.longitude}),()=>res(null),{enableHighAccuracy:false,timeout:10000,maximumAge:300000});}catch(e){res(null);}});}
 };
 function geoShow(txt,retry){
-  document.body.innerHTML=`<div style="position:fixed;inset:0;z-index:99999;background:#0b0b10;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;font-family:system-ui,sans-serif"><div style="max-width:460px"><div style="font-size:54px;margin-bottom:14px">⛔</div><p style="font-size:1.25rem;line-height:1.5;margin:0 0 18px">${esc(txt)}</p>${retry?`<button onclick="location.reload()" style="padding:12px 26px;border-radius:30px;border:0;background:#fff;color:#111;font:inherit;font-weight:700;cursor:pointer">${esc(t('geoRetry'))}</button>`:''}</div></div>`;
+  document.body.innerHTML=`<div style="position:fixed;inset:0;z-index:99999;background:#0b0b10;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;font-family:system-ui,sans-serif"><div style="max-width:460px"><div style="font-size:54px;margin-bottom:14px">⛔</div><p style="font-size:1.25rem;line-height:1.5;margin:0 0 18px">${esc(txt)}</p>${retry?`<button onclick="geoRetryNow()" style="padding:12px 26px;border-radius:30px;border:0;background:#fff;color:#111;font:inherit;font-weight:700;cursor:pointer">${esc(t('geoRetry'))}</button>`:''}</div></div>`;
 }
+/* "check again": forget the saved position, fetch the newest settings from the online database, then reload */
+function geoRetryNow(){try{localStorage.removeItem('tk_geo');}catch(e){}
+  const go=()=>location.reload();try{if(DB.cloud()){DB.refresh().then(go,go);setTimeout(go,4000);return;}}catch(e){}go();}
 /* returns true when the page may open, false when it is blocked */
 async function geoGate(){
-  const c=GEO.cfg();if(!c.geo.length)return true;
-  const block=()=>geoShow(c.msg||t('geoBlocked')),save=p=>{if(p){try{localStorage.setItem('tk_geo',JSON.stringify({la:p.la,lo:p.lo,t:Date.now()}));}catch(e){}}};
+  const c=GEO.cfg();if(!c.geo.length){try{localStorage.removeItem('tk_geo');}catch(e){}return true;}
+  /* when the visitor is blocked, quietly fetch the newest settings: if the admin removed the location, the block lifts at once */
+  const block=()=>{geoShow(c.msg||t('geoBlocked'),true);try{if(DB.cloud())DB.refresh().then(ch=>{if(ch){try{localStorage.removeItem('tk_geo');}catch(e){}location.reload();}});}catch(e){}},save=p=>{if(p){try{localStorage.setItem('tk_geo',JSON.stringify({la:p.la,lo:p.lo,t:Date.now()}));}catch(e){}}};
   let last=null;try{last=JSON.parse(localStorage.getItem('tk_geo'));}catch(e){}
   if(last&&Date.now()-last.t<6e5){   /* position known for 10 min: decide at once, refresh quietly */
-    GEO.ask().then(p=>{save(p);if(p&&GEO.inside(p.la,p.lo,c))block();});
+    GEO.ask().then(p=>{save(p);if(p&&GEO.inside(p.la,p.lo,c))block();else if(p&&GEO.inside(last.la,last.lo,c))location.reload();});
     if(GEO.inside(last.la,last.lo,c)){block();return false;}
     return true;}
   const w=document.createElement('div');w.id='geowait';w.style.cssText='position:fixed;inset:0;z-index:99998;background:#0b0b10;color:#fff;display:flex;align-items:center;justify-content:center;font:16px system-ui,sans-serif';w.textContent=t('geoWait');document.body.appendChild(w);
