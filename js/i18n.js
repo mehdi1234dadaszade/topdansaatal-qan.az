@@ -71,3 +71,7 @@ Object.assign(T.en,{navProducts:'Wholesale Products',navAlbums:'Premium Models'}
 Object.assign(T.az,{navProducts:'Topdan Məhsullar',navAlbums:'Premium Modellər'});
 Object.assign(T.ru,{navProducts:'Оптовые товары',navAlbums:'Премиум модели'});
 Object.assign(T.tr,{navProducts:'Toptan Ürünler',navAlbums:'Premium Modeller'});
+Object.assign(T.en,{geoBlocked:'Access to this website is restricted from your area.',geoNeed:'Please allow location access and reload the page to open this website.',geoWait:'Checking location…',geoRetry:'Try again'});
+Object.assign(T.az,{geoBlocked:'Bu ərazidən sayta giriş məhdudlaşdırılıb.',geoNeed:'Saytı açmaq üçün konum icazəsi verin və səhifəni yeniləyin.',geoWait:'Konum yoxlanılır…',geoRetry:'Yenidən yoxla'});
+Object.assign(T.ru,{geoBlocked:'Доступ к сайту из вашего района ограничен.',geoNeed:'Разрешите доступ к местоположению и обновите страницу, чтобы открыть сайт.',geoWait:'Проверка местоположения…',geoRetry:'Повторить'});
+Object.assign(T.tr,{geoBlocked:'Bu bölgeden siteye erişim kısıtlanmıştır.',geoNeed:'Siteyi açmak için konum iznini verin ve sayfayı yenileyin.',geoWait:'Konum kontrol ediliyor…',geoRetry:'Tekrar dene'});

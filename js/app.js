@@ -233,9 +233,40 @@ const pages={
    ${c.q?`<iframe class="map" title="Xəritə" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${encodeURIComponent(c.q)}&z=17&output=embed"></iframe>`:''}</div></div></section>`;
  }
 };
+/* ===== LOCATION BLOCK (Admin > Blok > Konum): a device inside a blocked circle cannot open the site =====
+   The browser asks the visitor for location permission; the distance to every blocked point is compared with its radius. */
+const GEO={
+  cfg(){const b=(DB.data.settings||{}).block||{};
+    return {geo:Object.values(b.geo||{}).filter(g=>g&&g.on!==false&&isFinite(g.lat)&&isFinite(g.lng)&&+g.r>0),policy:b.policy==='block'?'block':'allow',msg:String(b.msg||'').trim()};},
+  dist(a,b,c,d){const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));},
+  inside(la,lo,c){return c.geo.some(g=>GEO.dist(la,lo,+g.lat,+g.lng)<=+g.r);},
+  ask(){return new Promise(res=>{try{if(!navigator.geolocation)return res(null);
+    navigator.geolocation.getCurrentPosition(p=>res({la:p.coords.latitude,lo:p.coords.longitude}),()=>res(null),{enableHighAccuracy:false,timeout:10000,maximumAge:300000});}catch(e){res(null);}});}
+};
+function geoShow(txt,retry){
+  document.body.innerHTML=`<div style="position:fixed;inset:0;z-index:99999;background:#0b0b10;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:28px;font-family:system-ui,sans-serif"><div style="max-width:460px"><div style="font-size:54px;margin-bottom:14px">⛔</div><p style="font-size:1.25rem;line-height:1.5;margin:0 0 18px">${esc(txt)}</p>${retry?`<button onclick="location.reload()" style="padding:12px 26px;border-radius:30px;border:0;background:#fff;color:#111;font:inherit;font-weight:700;cursor:pointer">${esc(t('geoRetry'))}</button>`:''}</div></div>`;
+}
+/* returns true when the page may open, false when it is blocked */
+async function geoGate(){
+  const c=GEO.cfg();if(!c.geo.length)return true;
+  const block=()=>geoShow(c.msg||t('geoBlocked')),save=p=>{if(p){try{localStorage.setItem('tk_geo',JSON.stringify({la:p.la,lo:p.lo,t:Date.now()}));}catch(e){}}};
+  let last=null;try{last=JSON.parse(localStorage.getItem('tk_geo'));}catch(e){}
+  if(last&&Date.now()-last.t<6e5){   /* position known for 10 min: decide at once, refresh quietly */
+    GEO.ask().then(p=>{save(p);if(p&&GEO.inside(p.la,p.lo,c))block();});
+    if(GEO.inside(last.la,last.lo,c)){block();return false;}
+    return true;}
+  const w=document.createElement('div');w.id='geowait';w.style.cssText='position:fixed;inset:0;z-index:99998;background:#0b0b10;color:#fff;display:flex;align-items:center;justify-content:center;font:16px system-ui,sans-serif';w.textContent=t('geoWait');document.body.appendChild(w);
+  const ask=GEO.ask();ask.then(p=>{save(p);if(p&&GEO.inside(p.la,p.lo,c))block();});   /* also catches an answer that arrives late */
+  const r=await Promise.race([ask,new Promise(x=>setTimeout(()=>x('t'),12000))]);
+  w.remove();
+  if(r&&r!=='t')return !GEO.inside(r.la,r.lo,c);
+  if(c.policy==='block'){geoShow(t('geoNeed'),true);return false;}   /* strict mode: location unknown = blocked */
+  return true;
+}
 (async()=>{
   const page=document.body.dataset.page;
   await DB.load(); if(!WS)applyTheme();
+  if(!(await geoGate()))return;   /* blocked location: nothing else is built */
   /* load only the products this page needs (the album that is opened / the product / the basket) */
   if(DB._split){try{const q=new URLSearchParams(location.search),ids=[...CART.items().map(c=>c.id),...CART.saved()];
     if(page==='products'){const k=q.get('album')||'all';await DB.need(k==='all'?{all:true}:{albums:[k],ids});}
