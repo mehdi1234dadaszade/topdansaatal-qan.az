@@ -58,3 +58,9 @@ header .alang,#login .alang{padding:0!important;border:0!important;background:no
 
 .bchip{display:inline-flex;align-items:center;gap:2px;background:#f6eef2;border:1px solid #e3cfd8;border-radius:20px;padding:3px 6px 3px 12px;margin:3px 6px 3px 0;font-size:.9rem}
 .bchip button{border:0;background:none;cursor:pointer;padding:2px 5px;font-size:.8rem;color:#7d6169}.bchip button:hover{color:#c2476b}
+
+/* Blok > Konum */
+.tabs.sub{margin-bottom:12px}.tabs.sub button{padding:6px 14px;font-size:.9rem}
+.bkrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid #ecdde3;border-radius:12px;padding:8px 12px;margin:8px 0}
+.bkrow.off{opacity:.55}.bkrow .bkn{flex:1 1 150px;min-width:120px}.bkrow .bkc{font-variant-numeric:tabular-nums;color:#5a2248;font-size:.9rem}
+.bkrow .bkr input{width:90px}.bkrow a.b{text-decoration:none;display:inline-block}

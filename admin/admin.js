@@ -23,7 +23,7 @@ async function start(){
   trStatic();$('#login').hidden=true;$('#app').hidden=false;await DB.load(true);render();tkMigBar();if(DB._cloudNew&&DB.cloud()){DB._cloudNew=false;DB.save();}if(DB._migrated||DB._needIdx){DB._migrated=false;DB._needIdx=false;DB.save();}
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
-    ['w','z','o','u','q','h','a','s','c','k','x','d','g'].forEach(k=>$('#tab-'+k).hidden=k!==b.dataset.t);if(b.dataset.t==='o')renderO();if(b.dataset.t==='u')renderU();});
+    ['w','z','o','u','q','h','a','s','c','k','x','d','b','g'].forEach(k=>$('#tab-'+k).hidden=k!==b.dataset.t);if(b.dataset.t==='o')renderO();if(b.dataset.t==='u')renderU();if(b.dataset.t==='b')renderB();});
   const om=/^#order=(\d+)_([0-9a-z]+)$/i.exec(location.hash);
   if(om){oOpen={k:om[1],id:om[2].toLowerCase()};document.querySelector('.tabs button[data-t="o"]').click();}
 }
@@ -31,7 +31,7 @@ trStatic();
 if(sessionStorage.getItem('tk_admin'))start();
 const D=()=>DB.data;
 const aN=a=>a.name.az||a.name.en;
-function render(){renderG();renderQ();renderW();renderWS();renderH();renderS();renderC();renderK();renderX();renderA();renderD();}
+function render(){renderG();renderQ();renderW();renderWS();renderH();renderS();renderC();renderK();renderX();renderA();renderD();renderB();}
 let q='';
 function renderW(){
   const list=D().products.filter(w=>(w.brand+' '+w.model).toLowerCase().includes(q.toLowerCase()));
@@ -115,9 +115,9 @@ function storageNote(){
   if(!DB.cloud())return `<p style="font-size:.9rem;color:#7d6169">${tr('Uploaded photos live inside your browser (about 5 MB available) and inside store.json. If it fills up, put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields instead.')}</p>`;
   return `<p style="font-size:.9rem;color:#7d6169">${tr('Photos you upload are saved in the online database (Firebase), so the browser limit of about 5 MB does not stop you from uploading. But the photos are part of the data every visitor downloads. For many photos the best way is: put the photo files in <b>images/home/</b> on GitHub and paste their path (for example <b>images/home/slide-1.jpg</b>) into the photo fields.')}</p>`;}
 function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D(),null,1)],{type:'application/json'}));a.download='store.json';a.click();}
-function imp(f){if(!f)return;f.text().then(s=>{try{const d=JSON.parse(s);if(!d.albums||!d.products)throw 0;d.settings=d.settings||{};if(D().settings&&D().settings.adminLogin)d.settings.adminLogin=D().settings.adminLogin;
+function imp(f){if(!f)return;f.text().then(s=>{try{const d=JSON.parse(s);if(!d.albums||!d.products)throw 0;d.settings=d.settings||{};if(D().settings&&D().settings.adminLogin)d.settings.adminLogin=D().settings.adminLogin;if(D().settings&&D().settings.block&&!d.settings.block)d.settings.block=D().settings.block;
     if(!d.wholesale&&D().wholesale)d.wholesale=D().wholesale;['wholesaleKey','wdiscounts'].forEach(k=>{if(d.settings[k]==null&&D().settings&&D().settings[k]!=null)d.settings[k]=D().settings[k];});DB.data=d;DB.save();render();$('#msg').textContent=tr('Imported.');}catch(e){alert(tr('This is not a valid store.json file.'));}});}
-function reset(){if(confirm(tr('Remove all your changes and go back to the sample data?'))){const S0=D().settings||{},keep={};['adminLogin','wholesaleKey','wdiscounts'].forEach(k=>{if(S0[k]!=null)keep[k]=S0[k];});DB.data={albums:SEED_ALBUMS,products:makeProducts(),settings:keep,wholesale:D().wholesale};DB.save();render();}}
+function reset(){if(confirm(tr('Remove all your changes and go back to the sample data?'))){const S0=D().settings||{},keep={};['adminLogin','wholesaleKey','wdiscounts','block'].forEach(k=>{if(S0[k]!=null)keep[k]=S0[k];});DB.data={albums:SEED_ALBUMS,products:makeProducts(),settings:keep,wholesale:D().wholesale};DB.save();render();}}
 
 function saveYt(){D().settings.youtube=$('#yt').value.trim();DB.save();toast(tr('Saved ✓'));}
 
@@ -509,4 +509,108 @@ function albToWs(k){
     if(c){c.tags=c.tags||[];if(!c.tags.includes(k))c.tags.push(k);return;}
     c=JSON.parse(JSON.stringify(w));c.id=nid++;c.srcId=w.id;c.ws=1;c.tags=[k];W.products.push(c);added++;});
   DB.save();render();toast('Topdan səhifəsinə tətbiq olundu ✓ ('+added+' yeni saat)');
+}
+
+/* ================= BLOK > KONUM =================
+   The admin adds points (from a Google Maps link or coordinates). Around every point there is an imaginary circle
+   (default 1 km). On the website, a device whose location is inside a circle cannot open the site (see geoGate in js/app.js).
+   Stored in settings.block = {geo:[{id,name,lat,lng,r,on}], policy:'allow'|'block', msg:''} */
+const BK=()=>{const S=(D().settings=D().settings||{}),b=(S.block=S.block||{});b.geo=Array.isArray(b.geo)?b.geo:Object.values(b.geo||{});if(b.policy!=='block')b.policy='allow';return b;};
+let bkSel=null;   /* 'draft' or the id of the location shown in the map preview */
+const bkNum='(-?\\d{1,3}(?:\\.\\d+)?)';
+/* Google Maps link or coordinates -> {lat,lng} (or {err}) */
+function bkParse(s){
+  s=String(s||'').trim();if(!s)return {err:'Google Maps linkini və ya koordinatı yazın.'};
+  try{s=decodeURIComponent(s.replace(/\+/g,' '));}catch(e){}
+  if(/(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)/i.test(s))return {err:'Bu qısa linkdir (maps.app.goo.gl), brauzer onu açıb koordinatı oxuya bilmir. Google Maps-də yeri açın və ya ünvan sətrindəki uzun linki kopyalayın, yaxud xəritədə yerə sağ klik edib koordinatı (40.40930, 49.86710) kopyalayın.'};
+  const ok=(a,b)=>{a=+a;b=+b;return isFinite(a)&&isFinite(b)&&Math.abs(a)<=90&&Math.abs(b)<=180?{lat:a,lng:b}:null;};
+  let m,r;
+  /* degrees-minutes-seconds: 40°24'33.5"N 49°52'01.6"E */
+  if((m=/(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*([\d.]+)\s*["″]?\s*([NS])[\s,]+(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*([\d.]+)\s*["″]?\s*([EW])/i.exec(s))){
+    const la=(+m[1]+m[2]/60+m[3]/3600)*(/s/i.test(m[4])?-1:1),lo=(+m[5]+m[6]/60+m[7]/3600)*(/w/i.test(m[8])?-1:1);if((r=ok(la,lo)))return r;}
+  /* a place pin !3dLAT!4dLNG (most exact), then the map centre @LAT,LNG, then q=/ll=/query=, then /search/LAT,LNG */
+  const pats=[new RegExp('!3d'+bkNum+'!4d'+bkNum),new RegExp('@'+bkNum+','+bkNum),new RegExp('[?&](?:q|ll|query|center|destination|daddr)=(?:loc:)?'+bkNum+'\\s*,\\s*'+bkNum),new RegExp('/(?:search|place|dir)/'+bkNum+',\\s*\\+?'+bkNum)];
+  for(const p of pats){if((m=p.exec(s))&&(r=ok(m[1],m[2])))return r;}
+  /* plain "40.4093, 49.8671" */
+  if((m=new RegExp('^\\s*'+bkNum+'\\s*°?\\s*[,;\\s]\\s*'+bkNum+'\\s*°?\\s*$').exec(s))&&(r=ok(m[1],m[2])))return r;
+  return {err:'Koordinat tapılmadı. Google Maps linkini (…/@40.4093,49.8671,17z) və ya "40.4093, 49.8671" formatında koordinatı yazın.'};
+}
+const bkLink=(la,lo)=>'https://www.google.com/maps?q='+la+','+lo;
+/* Google Maps preview with the imaginary circle drawn on top (size computed from the zoom level) */
+function bkMapHTML(lat,lng,r){
+  const W=Math.max(280,Math.min(900,($('#bk_prev')||{}).clientWidth||600)),Hh=340,mpp0=156543.03392*Math.cos(lat*Math.PI/180||0.01);
+  let z=Math.round(Math.log2(mpp0*Hh*0.3/r));z=Math.max(2,Math.min(19,z));
+  let rp=r/(mpp0/Math.pow(2,z));while(rp>Math.min(W,Hh)*0.46&&z>2){z--;rp=r/(mpp0/Math.pow(2,z));}
+  return `<div style="position:relative;height:${Hh}px;border-radius:12px;overflow:hidden;border:1px solid #ecdde3;background:#e9eef2">
+   <iframe src="https://maps.google.com/maps?q=${lat},${lng}&z=${z}&output=embed" style="position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Google Maps"></iframe>
+   <div id="bk_circle" data-rp="${rp.toFixed(1)}" style="position:absolute;left:50%;top:50%;width:${(2*rp).toFixed(1)}px;height:${(2*rp).toFixed(1)}px;margin:${(-rp).toFixed(1)}px 0 0 ${(-rp).toFixed(1)}px;border:2px solid #d62839;background:rgba(214,40,57,.18);border-radius:50%;pointer-events:none"></div></div>
+   <p class="hint" style="margin:6px 0 0">${(+lat).toFixed(5)}, ${(+lng).toFixed(5)} · radius ${r} m (dairənin diametri ${(2*r/1000).toFixed(2)} km) · <a href="${bkLink(lat,lng)}" target="_blank" rel="noopener">Google Maps-də aç</a> · yaxınlaşdırma təxminidir</p>`;
+}
+function bkPreview(){
+  const box=$('#bk_prev');if(!box)return;let pt=null;
+  const d=bkParse($('#bk_l')?$('#bk_l').value:''),rr=Math.round(+($('#bk_r')||{}).value);
+  if(bkSel==='draft'&&!d.err&&rr>=50&&rr<=50000)pt={lat:d.lat,lng:d.lng,r:rr};
+  else{const g=BK().geo.find(x=>x.id===bkSel);if(g)pt={lat:+g.lat,lng:+g.lng,r:+g.r};}
+  box.innerHTML=pt?bkMapHTML(pt.lat,pt.lng,pt.r):'<p class="hint" style="margin:0">Konum yazdıqda və ya siyahıda "Xəritədə bax" basdıqda Google Maps burada görünəcək, ətrafında isə qırmızı dairə çəkiləcək.</p>';
+}
+function bkDraft(){
+  const m=$('#bk_m'),v=$('#bk_l').value.trim();if(!v){m.textContent='';m.style.color='';bkSel=null;bkPreview();return;}
+  const d=bkParse(v),rr=Math.round(+$('#bk_r').value);
+  if(d.err){m.textContent=d.err;m.style.color='#b3261e';return;}
+  if(!(rr>=50&&rr<=50000)){m.textContent='Radius 50 ilə 50000 metr arasında olmalıdır.';m.style.color='#b3261e';return;}
+  m.textContent='Tapıldı: '+d.lat.toFixed(5)+', '+d.lng.toFixed(5);m.style.color='#1a7f37';bkSel='draft';bkPreview();
+}
+function bkAdd(){
+  const d=bkParse($('#bk_l').value),rr=Math.round(+$('#bk_r').value),m=$('#bk_m');
+  if(d.err){m.textContent=d.err;m.style.color='#b3261e';return;}
+  if(!(rr>=50&&rr<=50000)){m.textContent='Radius 50 ilə 50000 metr arasında olmalıdır.';m.style.color='#b3261e';return;}
+  const B=BK(),id='g'+Date.now().toString(36);
+  B.geo.push({id,name:$('#bk_n').value.trim(),lat:+d.lat.toFixed(6),lng:+d.lng.toFixed(6),r:rr,on:true});
+  DB.save();bkSel=id;renderB();toast('Konum əlavə olundu ✓');
+}
+function bkSet(id,k,v){
+  const g=BK().geo.find(x=>x.id===id);if(!g)return;
+  if(k==='r'){const n=Math.round(+v);if(!(n>=50&&n<=50000)){toast('Radius 50 ilə 50000 metr arasında olmalıdır');renderB();return;}g.r=n;}
+  else if(k==='on')g.on=!!v;else g.name=String(v||'').trim();
+  DB.save();if(k==='on')renderB();else if(bkSel===id)bkPreview();
+}
+function bkView(id){bkSel=id;bkPreview();const b=$('#bk_prev');if(b&&b.scrollIntoView)b.scrollIntoView({block:'center',behavior:'smooth'});}
+function bkDel(id){const B=BK(),g=B.geo.find(x=>x.id===id);if(!g||!confirm('Bu konum silinsin? ('+(g.name||g.lat+', '+g.lng)+')'))return;B.geo=B.geo.filter(x=>x.id!==id);if(bkSel===id)bkSel=null;DB.save();renderB();}
+function bkPol(v){BK().policy=v==='block'?'block':'allow';DB.save();toast('Saxlanıldı ✓');}
+function bkMsg(v){BK().msg=String(v||'').trim();DB.save();toast('Saxlanıldı ✓');}
+/* checks THIS browser's location against the circles, so the admin can see how the block works */
+function bkTest(){
+  const out=$('#bk_t');if(!navigator.geolocation){out.textContent='Bu brauzer konumu dəstəkləmir.';return;}
+  out.textContent='Konum soruşulur…';
+  navigator.geolocation.getCurrentPosition(p=>{
+    const la=p.coords.latitude,lo=p.coords.longitude,B=BK().geo;
+    const dist=(a,b,c,d)=>{const R=6371000,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r,h=Math.sin(x/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));};
+    const rows=B.map(g=>{const m=Math.round(dist(la,lo,+g.lat,+g.lng)),in_=m<=g.r&&g.on!==false;return '• '+(g.name||(+g.lat).toFixed(4)+', '+(+g.lng).toFixed(4))+': '+m+' m'+(g.on===false?' (passivdir)':in_?' → DAİRƏNİN İÇİNDƏSİNİZ, sayt sizə bloklanardı':' → xaricdə');});
+    out.innerHTML='Sizin konum: '+la.toFixed(5)+', '+lo.toFixed(5)+' (dəqiqlik təxminən ±'+Math.round(p.coords.accuracy)+' m)<br>'+(rows.length?rows.map(esc).join('<br>'):'Hələ konum əlavə olunmayıb.');
+  },e=>{out.textContent='Konum alınmadı ('+(e&&e.code===1?'icazə verilmədi':'müəyyən edilə bilmədi')+').';},{enableHighAccuracy:true,timeout:15000});
+}
+function renderB(){
+  const el=$('#tab-b');if(!el)return;const B=BK();
+  el.innerHTML=`<div class="tabs sub"><button class="on">Konum</button></div>
+  <div class="card2"><h2>Konum bloku</h2>
+   <p class="hint">Google Maps-dən bir yerin linkini və ya koordinatını əlavə edin. Həmin nöqtənin ətrafında xəyali dairə (standart 1 km) yaranır, dairənin içində olan cihazlar sayta (həm əsas sayt, həm topdan səhifə) daxil ola bilmir. İstədiyiniz qədər konum əlavə edə bilərsiniz.</p>
+   <div class="two"><label>Ad (istəyə görə)<input id="bk_n" placeholder="Məs. rəqib mağaza"></label>
+   <label>Google Maps linki və ya koordinat<input id="bk_l" oninput="bkDraft()" placeholder="https://www.google.com/maps/@40.4093,49.8671,17z   və ya   40.4093, 49.8671"></label></div>
+   <div class="two"><label>Dairənin radiusu (metr)<input id="bk_r" type="number" min="50" max="50000" step="50" value="1000" oninput="bkDraft()"></label>
+   <div style="align-self:end"><button class="b" onclick="bkAdd()">Konum əlavə et</button></div></div>
+   <p id="bk_m" class="hint" style="margin:6px 0 10px"></p><div id="bk_prev"></div></div>
+  <div class="card2"><h2>Əlavə olunmuş konumlar (${B.geo.length})</h2>
+   ${B.geo.map(g=>`<div class="bkrow${g.on===false?' off':''}"><label><input type="checkbox" ${g.on===false?'':'checked'} onchange="bkSet('${esc(g.id)}','on',this.checked)"> aktiv</label>
+     <input class="bkn" value="${esc(g.name||'')}" placeholder="Ad" onchange="bkSet('${esc(g.id)}','name',this.value)">
+     <span class="bkc">${(+g.lat).toFixed(5)}, ${(+g.lng).toFixed(5)}</span>
+     <label class="bkr"><input type="number" min="50" max="50000" step="50" value="${+g.r}" onchange="bkSet('${esc(g.id)}','r',this.value)"> m</label>
+     <button class="b s" onclick="bkView('${esc(g.id)}')">Xəritədə bax</button>
+     <a class="b s" href="${bkLink(+g.lat,+g.lng)}" target="_blank" rel="noopener">Google Maps</a>
+     <button class="b s r" onclick="bkDel('${esc(g.id)}')">Sil</button></div>`).join('')||'<p class="hint" style="margin:0">Hələ konum əlavə olunmayıb.</p>'}</div>
+  <div class="card2"><h2>Qaydalar</h2>
+   <label>Konumu müəyyən edilə bilməyən ziyarətçilər<select onchange="bkPol(this.value)"><option value="allow" ${B.policy==='allow'?'selected':''}>Sayta daxil ola bilsinlər (tövsiyə olunur)</option><option value="block" ${B.policy==='block'?'selected':''}>Bloklansınlar (sərt rejim: konum icazəsi verməyənlər də girə bilməz)</option></select></label>
+   <label style="margin-top:10px">Bloklanan şəxsə göstərilən mesaj (boş qalsa standart mətn çıxır)<textarea rows="2" onchange="bkMsg(this.value)" placeholder="Bu ərazidən sayta giriş məhdudlaşdırılıb.">${esc(B.msg||'')}</textarea></label>
+   <p style="margin:12px 0 4px"><button class="b s" onclick="bkTest()">Mənim konumumu yoxla</button></p><p id="bk_t" class="hint" style="margin:0"></p></div>
+  <div class="card2"><h2>Bilmək vacibdir</h2><p class="hint" style="margin:0">Bu blok ziyarətçinin brauzerinin verdiyi konuma əsaslanır. Ziyarətçidən konum icazəsi istənilir; icazə verməyən, VPN və ya saxta GPS istifadə edən şəxs bu üsulla bloklanmır (yuxarıdakı "sərt rejim" icazə verməyənləri də bloklayır, amma axtarış robotları da bu halda sayta girə bilməz). Konum siyahısı saytın məlumatında saxlanılır və texniki biliyi olan şəxs tərəfindən görünə bilər. Yeni konum əlavə etdikdən sonra bəzi ziyarətçilərdə qüvvəyə minməsi 10 dəqiqəyə qədər çəkə bilər.</p></div>`;
+  bkPreview();
 }
