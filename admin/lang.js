@@ -31,7 +31,7 @@ const AZ={
 'Promo code - % off the basket':'Promo kod - səbətə % endirim',
 'Promo code - fixed ₼ off the basket':'Promo kod - səbətə sabit ₼ endirim',
 'New discount':'Yeni endirim',
-'Type':'Növ',
+'Type':'Növ','Watch':'Saat','Lighter':'Alışqan',
 'Value (% or ₼)':'Dəyər (% və ya ₼)',
 'Code (customer types it in the basket)':'Kod (müştəri səbətdə yazır)',
 'Minimum order ₼':'Minimum sifariş ₼',
