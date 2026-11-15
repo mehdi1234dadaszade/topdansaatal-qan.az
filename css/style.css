@@ -391,3 +391,7 @@ header.hide{transform:translateY(-120%)}
 /* mechanism label (replaces stock) */
 .mech{font-weight:600;margin:6px 0;color:#d4d2e6}.mech b{color:var(--gold2,#e7c46a)}
 .cb .mech{margin:4px 0 10px;font-size:.88rem}
+/* album titles: red glow behind every letter so white text stays readable on light covers */
+.card.album .ci span{text-shadow:0 0 4px rgba(225,29,46,.95),0 0 9px rgba(225,29,46,.9),0 0 18px rgba(225,29,46,.75),0 0 30px rgba(225,29,46,.5),0 1px 2px rgba(0,0,0,.55)}
+.card.album .ci b{box-shadow:0 0 12px rgba(225,29,46,.55)}
+
