@@ -173,8 +173,9 @@ const DB = {
     const side=WS?'w':'m',x=this.data._ix[side];let hs=[];
     if(o.all)hs=x.sh.slice();
     (o.albums||[]).forEach(k=>hs.push(SHK(k)));
+    if(o.lighters&&x.ls)hs.push(x.ls);
     (o.ids||[]).forEach(id=>{const h=x.idAlb[id];if(h)hs.push(h);});
-    hs=[...new Set(hs)].filter(h=>x.sh.includes(h)&&!this._have[side+h]);
+    hs=[...new Set(hs)].filter(h=>(x.sh.includes(h)||h===x.ls)&&!this._have[side+h]);
     await Promise.all(hs.map(h=>this._shard(side,h)));
   },
   async _shard(side,h){
@@ -189,13 +190,15 @@ const DB = {
   },
   /* ---- split loading: admin side (built on every save) ---- */
   derive(d){
-    const mk=(P,A,fid,auto,ws)=>{
-      const x={n:{},cov:{},feat:[],brands:[],idAlb:{},sh:[]},sh={};
-      P.forEach((w,i)=>{const c=Object.assign({},w,{_o:i});if(ws)c.ws=1;const tg=(w.tags&&w.tags.length)?w.tags:[null];tg.forEach(k=>{const h=SHK(k);(sh[h]=sh[h]||[]).push(c);});x.idAlb[w.id]=SHK(tg[0]);});
+    const mk=(P0,A,fid,auto,ws)=>{
+      const P=P0.filter(w=>w.cat!=='lighter'),L=P0.filter(w=>w.cat==='lighter');   /* lighters: separate page, separate shard */
+      const x={n:{},cov:{},feat:[],brands:[],idAlb:{},sh:[],nl:L.length,ls:L.length?SHK('__lighters'):null},sh={};
+      if(L.length){sh[x.ls]=L.map(w=>{const c=Object.assign({},w,{_o:P0.indexOf(w)});if(ws)c.ws=1;x.idAlb[w.id]=x.ls;return c;});}
+      P.forEach(w=>{const i=P0.indexOf(w),c=Object.assign({},w,{_o:i});if(ws)c.ws=1;const tg=(w.tags&&w.tags.length)?w.tags:[null];tg.forEach(k=>{const h=SHK(k);(sh[h]=sh[h]||[]).push(c);});x.idAlb[w.id]=SHK(tg[0]);});
       A.forEach(a=>{const l=P.filter(w=>(w.tags||[]).includes(a.key));x.n[a.key]=l.length;if(l[0])x.cov[a.key]={id:l[0].id,img:l[0].img||'',kind:l[0].kind,color:l[0].color};});
       let f=(fid||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=auto(P);
       x.feat=f.map(w=>{const c=Object.assign({},w);if(ws)c.ws=1;return c;});
-      x.brands=[...new Set(P.map(w=>w.brand))];x.sh=Object.keys(sh);return {x,sh};
+      x.brands=[...new Set(P.map(w=>w.brand))];x.sh=Object.keys(sh).filter(h=>h!==x.ls);return {x,sh};
     };
     const W=d.wholesale||{},H=(d.settings||{}).home||{};
     const m=mk(d.products||[],d.albums||[],H.featuredIds,P=>P.slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8),false);

@@ -29,6 +29,8 @@ const CT=()=>{const C=DB.data.settings.contact||{},ph=C.phone||'';
   ig:C.instagram||'',tk:C.tiktok||'',wa:C.whatsapp||'',yt:C.youtube||'',q:C.map||''};};
 const card=w=>`<a class="card" href="product.html?id=${w.id}">${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div><button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button></a>`;
 const inAlbum=(w,k)=>k==='all'||(w.tags||[]).includes(k);
+const isL=w=>!!w&&w.cat==='lighter';                 /* lighters have their own page and are kept out of the watch lists */
+const hasL=()=>{const X=DB.ix();return X?X.nl>0:PRODS().some(isL);};
 
 /* header: hide the centered text if there is no room for it (never overlaps logo or buttons) */
 function fitHexp(){const e=document.querySelector('.hexp');if(!e)return;e.style.display='';
@@ -79,7 +81,7 @@ function albumCard(a){
 const BIGS=()=>((WS?(DB.data.wholesale||{}).bigAlbums:DB.data.bigAlbums)||[]);
 const bigItems=b=>(b.items||[]).map(k=>ALBS().find(a=>a.key===k)).filter(Boolean);
 /* hero buttons: the first two big albums (falls back to the old button when there are none) */
-function bigBtns(fb){const B=BIGS().slice(0,2);if(!B.length)return fb;return B.map(b=>`<a class="btn ghost" href="albums.html?big=${encodeURIComponent(b.key)}">${esc(an(b))}</a>`).join(' ');}
+function bigBtns(fb){const B=BIGS().slice(0,2),L=(!WS&&hasL())?` <a class="btn ghost" href="lighters.html">${t('lighters')}</a>`:'';if(!B.length)return fb+L;return B.map(b=>`<a class="btn ghost" href="albums.html?big=${encodeURIComponent(b.key)}">${esc(an(b))}</a>`).join(' ')+L;}
 function bigFrame(title,list,href){
   return `<div class="bframe"><div class="head"><h2>${href?`<a href="${href}">${esc(title)}</a>`:esc(title)}</h2></div><div class="bgrid3">${list.map(albumCard).join('')}</div></div>`;
 }
@@ -137,14 +139,14 @@ function wsAsk(ok,full){
 function wsOpen(e){if(e)e.preventDefault();const go=()=>{location.href='topdan/index.html';};if(wsOK())go();else wsAsk(go);return false;}
 const pages={
  windex(){
-  const D=DB.data,H=D.wholesale.home||{},Z=DS(),P=PRODS(),A=ALBS(),on=Z.heroMode!=='classic';
+  const D=DB.data,H=D.wholesale.home||{},Z=DS(),P=PRODS().filter(w=>!isL(w)),A=ALBS(),on=Z.heroMode!=='classic';
   const X=DB.ix();let f=X?X.feat:(H.featuredIds||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!X&&!f.length)f=P.slice().reverse().slice(0,8);
   const brands=X?X.brands:[...new Set(P.map(w=>w.brand))],yb=ytId(Z.bgYoutube),ov=Math.min(90,Math.max(0,Z.overlay==null||Z.overlay===''?45:+Z.overlay)),
    media=yb?`<iframe src="https://www.youtube.com/embed/${yb}?autoplay=1&mute=1&loop=1&playlist=${yb}&controls=0&modestbranding=1&playsinline=1&rel=0" title="" allow="autoplay;encrypted-media" tabindex="-1"></iframe>`
     :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster-2.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/hero.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
    <div class="hin2"><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
-   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
+   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a> <a class="btn ghost" href="lighters.html">${t('lighters')}</a></div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section><span id="after"></span>
    ${A.length?`<section class="wrap">${albumsInner('h2')}</section>`:''}
@@ -156,8 +158,8 @@ const pages={
   if(WS)return pages.windex();
   const D=DB.data,H=D.settings.home||{},on=k=>!(H.show&&H.show[k]===false);
   const X=DB.ix();let f=X?X.feat:(H.featuredIds||[]).map(id=>PRODS().find(w=>w.id===id)).filter(Boolean);
-  if(!X&&!f.length)f=PRODS().slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8);
-  const auto=X?X.brands:[...new Set(PRODS().map(w=>w.brand))],custom=(H.brands||'').split(',').map(x=>x.trim()).filter(Boolean),brands=custom.length?custom:auto;
+  if(!X&&!f.length)f=PRODS().filter(w=>!isL(w)).sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8);
+  const auto=X?X.brands:[...new Set(PRODS().filter(w=>!isL(w)).map(w=>w.brand))],custom=(H.brands||'').split(',').map(x=>x.trim()).filter(Boolean),brands=custom.length?custom:auto;
   const m=ytId(D.settings.youtube),v2=(D.settings.design||{}).video2||'';
   const vid=m?`<iframe src="https://www.youtube.com/embed/${m}" allowfullscreen title="Video" loading="lazy"></iframe>`
    :v2?`<video controls playsinline preload="metadata"><source src="${esc(imgSrc(v2))}" onerror="this.closest('section').remove()"></video>`:'';
@@ -195,7 +197,7 @@ const pages={
    <p style="text-align:center;margin-top:30px"><a class="btn" href="products.html">${t('allProducts')}</a></p></section>`;},
  products(){
   const D=DB.data,p=new URLSearchParams(location.search);let k=p.get('album')||'all',sort='',qs='';
-  const draw=()=>{let l=PRODS().filter(w=>inAlbum(w,k)&&(w.brand+' '+w.model).toLowerCase().includes(qs));
+  const draw=()=>{let l=PRODS().filter(w=>!isL(w)&&inAlbum(w,k)&&(w.brand+' '+w.model).toLowerCase().includes(qs));
    if(sort==='lo')l.sort((a,b)=>a.price-b.price);if(sort==='hi')l.sort((a,b)=>b.price-a.price);
    $('#list').innerHTML=l.length?l.map(card).join(''):`<p>${t('none')}</p>`;$('#cnt').textContent=l.length+' '+t('count');
    $('#chips').innerHTML=[{key:'all',name:{az:t('all')}},...ALBS()].map(a=>`<button class="chip ${a.key===k?'on':''}" data-k="${esc(a.key)}">${esc(an(a))}</button>`).join('');
@@ -204,22 +206,31 @@ const pages={
    <select id="sort"><option value="">${t('price')}</option><option value="lo">${t('sortLow')}</option><option value="hi">${t('sortHigh')}</option></select></div><p class="cnt" id="cnt"></p><div id="list" class="grid"></div></section>`;
   $('#sort').onchange=e=>{sort=e.target.value;draw();};$('#qs').oninput=e=>{qs=e.target.value.trim().toLowerCase();draw();};draw();
  },
+ lighters(){
+  let sort='',qs='';
+  const draw=()=>{let l=PRODS().filter(w=>isL(w)&&(w.brand+' '+w.model).toLowerCase().includes(qs));
+   if(sort==='lo')l.sort((a,b)=>a.price-b.price);if(sort==='hi')l.sort((a,b)=>b.price-a.price);
+   $('#list').innerHTML=l.length?l.map(card).join(''):`<p>${t('none')}</p>`;$('#cnt').textContent=l.length+' '+t('count');};
+  $('#main').innerHTML=`<section class="wrap"><div class="head"><h1>${t('lighters')}</h1></div><div class="tools"><input id="qs" type="search" placeholder="${esc(t('search'))}" aria-label="${esc(t('search'))}">
+   <select id="sort"><option value="">${t('price')}</option><option value="lo">${t('sortLow')}</option><option value="hi">${t('sortHigh')}</option></select></div><p class="cnt" id="cnt"></p><div id="list" class="grid"></div></section>`;
+  $('#sort').onchange=e=>{sort=e.target.value;draw();};$('#qs').oninput=e=>{qs=e.target.value.trim().toLowerCase();draw();};draw();
+ },
  product(){
   const id=+new URLSearchParams(location.search).get('id'),w=PRODS().find(x=>x.id===id);
   if(!w){$('#main').innerHTML=`<section class="wrap"><p>${t('notFound')}</p><a class="btn" href="products.html">${t('back')}</a></section>`;return;}
   const row=(a,b)=>`<tr><th>${a}</th><td>${b}</td></tr>`,c=CT(),Z=DS(),
    bg=imgSrc(Z.productBg||'images/product-bg.png').replace(/'/g,'%27'),dim=Math.min(85,Math.max(0,Z.pbOverlay==null||Z.pbOverlay===''?25:+Z.pbOverlay))/100,
-   rel=PRODS().filter(x=>x.id!==w.id&&(x.tags||[]).some(g=>(w.tags||[]).includes(g))).slice(0,4);
+   LI=isL(w),BK=LI?'lighters.html':'products.html',rel=PRODS().filter(x=>x.id!==w.id&&(LI?isL(x):(!isL(x)&&(x.tags||[]).some(g=>(w.tags||[]).includes(g))))).slice(0,4);
   document.title=w.brand+' '+w.model+' · '+NAME();
   const _bi=new Image();_bi.onload=()=>{const st=$('.pstage');if(st&&_bi.naturalWidth)st.style.setProperty('--par',_bi.naturalWidth+'/'+_bi.naturalHeight);};_bi.src=imgSrc(Z.productBg||'images/product-bg.png');
-  $('#main').innerHTML=`<section class="pstage" style="--pbg:url('${bg}');--pdim:${dim}"><div class="pst-in"><div class="crumbs"><a href="index.html">${t('home')}</a> / <a href="products.html">${t('products')}</a> / ${esc(w.brand)} ${esc(w.model)}</div>
+  $('#main').innerHTML=`<section class="pstage" style="--pbg:url('${bg}');--pdim:${dim}"><div class="pst-in"><div class="crumbs"><a href="index.html">${t('home')}</a> / <a href="${BK}">${t(LI?'lighters':'products')}</a> / ${esc(w.brand)} ${esc(w.model)}</div>
    <div class="pimg"><img src="${esc(photo(w))}" alt="${esc(w.brand+' '+w.model)}" onerror="this.onerror=null;this.src=this.dataset.f;this.classList.add('bare')" data-f="${productImg({...w,img:'',bare:1})}"></div>
    <div class="ptitle"><h1>${esc(w.brand)} ${esc(w.model)}</h1><p class="big">${priceHTML(w,1)}</p>
-   ${w.mech?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}</div></div>
+   ${w.mech&&!LI?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}</div></div>
    <a class="scrolld" href="#pdet" aria-label="${esc(t('details'))}"><span>${t('details')}</span><i></i></a></section>
    <section class="wrap" id="pdet"><div class="pdet"><div class="head"><h2>${t('details')}</h2></div><p class="pdesc">${esc(w.desc)||t('desc')}</p>
-   <table>${row(t('brand'),esc(w.brand))}${row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${w.size?row(t('size'),esc(w.size)):''}${w.shade?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${w.mech?row(t('mech'),esc(w.mech)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
-   <div class="pbtns"><button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> ${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="products.html">${t('back')}</a></div></div>
+   <table>${row(t('brand'),esc(w.brand))}${LI?'':row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${!LI&&w.size?row(t('size'),esc(w.size)):''}${!LI&&w.shade?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${!LI&&w.mech?row(t('mech'),esc(w.mech)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
+   <div class="pbtns"><button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> ${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="${BK}">${t('back')}</a></div></div>
    ${rel.length?`<div class="head" style="margin-top:56px"><h2>${t('related')}</h2></div><div class="grid">${rel.map(card).join('')}</div>`:''}</section>`;
  },
  contact(){
@@ -273,6 +284,7 @@ async function geoGate(){
   /* load only the products this page needs (the album that is opened / the product / the basket) */
   if(DB._split){try{const q=new URLSearchParams(location.search),ids=[...CART.items().map(c=>c.id),...CART.saved()];
     if(page==='products'){const k=q.get('album')||'all';await DB.need(k==='all'?{all:true}:{albums:[k],ids});}
+    else if(page==='lighters')await DB.need({lighters:true,ids});
     else if(page==='product')await DB.need({ids:[+q.get('id')].concat(ids)});
     else if(page==='account')await DB.need({all:true});
     else await DB.need({ids});}catch(e){}}
