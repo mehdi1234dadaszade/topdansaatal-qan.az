@@ -147,7 +147,6 @@ const pages={
    <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section><span id="after"></span>
-   ${brands.length?`<div class="strip">${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`:''}
    ${A.length?`<section class="wrap">${albumsInner('h2')}</section>`:''}
    <section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>
    <section class="cta"><h2>${t('w3')}</h2><p>${t('w3d')}</p><a class="btn" href="contact.html">${t('contact')}</a></section>`;
