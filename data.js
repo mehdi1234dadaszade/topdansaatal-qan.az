@@ -59,7 +59,8 @@ function shape(k,c){
    jar:`<rect x="54" y="100" width="92" height="58" rx="12" fill="${c}"/><rect x="50" y="74" width="100" height="30" rx="9" fill="#d9b45a"/>`,
    perfume:`<rect x="58" y="88" width="84" height="82" rx="16" fill="${c}"/><rect x="82" y="48" width="36" height="32" rx="6" fill="#d9b45a"/>`,
    palette:`<rect x="34" y="58" width="132" height="90" rx="12" fill="#2b2326"/><circle cx="76" cy="100" r="14" fill="${c}"/><circle cx="118" cy="100" r="14" fill="${c}" opacity=".7"/>`,
-   nail:`<rect x="72" y="100" width="56" height="64" rx="12" fill="${c}"/><rect x="88" y="52" width="24" height="52" rx="6" fill="#2b2326"/>`
+   nail:`<rect x="72" y="100" width="56" height="64" rx="12" fill="${c}"/><rect x="88" y="52" width="24" height="52" rx="6" fill="#2b2326"/>`,
+   lighter:`<rect x="72" y="92" width="56" height="82" rx="10" fill="${c}"/><rect x="72" y="74" width="56" height="22" rx="6" fill="#d9b45a"/><rect x="92" y="64" width="16" height="14" rx="3" fill="#2b2326"/><path d="M100 24c10 14 14 22 8 32-3 5-13 5-16 0-6-10 2-18 8-32z" fill="#ffb02e"/><path d="M100 40c5 7 6 11 3 15-2 3-6 3-7 0-2-5 2-8 4-15z" fill="#fff3c4"/>`
   }[k]||`<circle cx="100" cy="100" r="40" fill="${c}"/>`;
 }
 function productImg(w){
@@ -191,11 +192,11 @@ const DB = {
   derive(d){
     const mk=(P,A,fid,auto,ws)=>{
       const x={n:{},cov:{},feat:[],brands:[],idAlb:{},sh:[]},sh={};
-      P.forEach((w,i)=>{const c=Object.assign({},w,{_o:i});if(ws)c.ws=1;const tg=(w.tags&&w.tags.length)?w.tags:[null];tg.forEach(k=>{const h=SHK(k);(sh[h]=sh[h]||[]).push(c);});x.idAlb[w.id]=SHK(tg[0]);});
-      A.forEach(a=>{const l=P.filter(w=>(w.tags||[]).includes(a.key));x.n[a.key]=l.length;if(l[0])x.cov[a.key]={id:l[0].id,img:l[0].img||'',kind:l[0].kind,color:l[0].color};});
-      let f=(fid||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=auto(P);
+      P.forEach((w,i)=>{const c=Object.assign({},w,{_o:i});if(ws)c.ws=1;const tg=w.kind==='lighter'?['_alisqan']:((w.tags&&w.tags.length)?w.tags:[null]);tg.forEach(k=>{const h=SHK(k);(sh[h]=sh[h]||[]).push(c);});x.idAlb[w.id]=SHK(tg[0]);});
+      A.forEach(a=>{const l=P.filter(w=>w.kind!=='lighter'&&(w.tags||[]).includes(a.key));x.n[a.key]=l.length;if(l[0])x.cov[a.key]={id:l[0].id,img:l[0].img||'',kind:l[0].kind,color:l[0].color};});
+      let f=(fid||[]).map(id=>P.find(w=>w.id===id)).filter(Boolean);if(!f.length)f=auto(P.filter(w=>w.kind!=='lighter'));
       x.feat=f.map(w=>{const c=Object.assign({},w);if(ws)c.ws=1;return c;});
-      x.brands=[...new Set(P.map(w=>w.brand))];x.sh=Object.keys(sh);return {x,sh};
+      x.brands=[...new Set(P.filter(w=>w.kind!=='lighter').map(w=>w.brand))];x.sh=Object.keys(sh);return {x,sh};
     };
     const W=d.wholesale||{},H=(d.settings||{}).home||{};
     const m=mk(d.products||[],d.albums||[],H.featuredIds,P=>P.slice().sort((a,b)=>b.price-a.price).filter((_,i)=>i%4===0).slice(0,8),false);

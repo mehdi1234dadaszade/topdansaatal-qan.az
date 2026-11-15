@@ -372,7 +372,7 @@ function renderWS(){
    <p>Qiyməti və mexanizmi dəyişin, avtomatik saxlanılır. Burada yazdığınız qiymət <b>topdan qiymətdir</b>.</p>
    ${list.map(w=>`<div class="row">${imgTag(w)}<div><b>${esc(w.brand)} ${esc(w.model)}</b><small>${esc((w.tags||[]).map(k=>{const a=W.albums.find(x=>x.key===k);return a?wsN(a):k;}).join(', '))}</small></div>
     <label>Topdan qiymət ₼<input type="number" min="0" step="any" value="${w.price}" onchange="wsUpd(${w.id},'price',this.value)"></label>
-    <label>Mexanizm${mechSel(w,`wsUpdM(${w.id},this.value)`)}</label>
+    ${w.kind==='lighter'?'<label>Növ<input value="Alışqan" disabled></label>':`<label>Mexanizm${mechSel(w,`wsUpdM(${w.id},this.value)`)}</label>`}
     <div class="acts"><button class="b s" onclick="wsEdit(${w.id})">Redaktə</button><button class="b s r" onclick="wsDel(${w.id})">Sil</button></div></div>`).join('')||'<p>Hələ topdan məhsul yoxdur. "+ Topdan məhsul əlavə et" düyməsini basın.</p>'}
    ${bigHTML(1)}<div class="card2"><h2>Topdan albomlar</h2><p class="hint">Albomlar topdan səhifəsində məhsulları qruplaşdırır (məsələn: Premium modellər, İdman). Məhsulu əlavə edərkən albom seçilir.</p>
    <form class="box" style="max-width:none" onsubmit="wsAddA(event)"><b>Yeni albom</b><div class="two"><label>Ad<input id="wsa_n" required></label></div><button class="b">Albom əlavə et</button></form>
@@ -397,7 +397,9 @@ function wsUpd(id,f,v){const w=WSD().products.find(x=>x.id===id);if(!w)return;w[
 function wsDel(id){const w=WSD().products.find(x=>x.id===id);if(w&&confirm('Silinsin: '+w.brand+' '+w.model+'?')){WSD().products=WSD().products.filter(x=>x.id!==id);DB.save();renderWS();}}
 function wsEdit(id){
   const W=WSD(),w=id?W.products.find(x=>x.id===id):{brand:'',model:'',price:100,stock:100,mech:'Mexanika',kind:'watch',color:'#e11d2e',tags:[],img:'',desc:'',size:'',shade:'',origin:''};
+  const isL=w.kind==='lighter';
   $('#wf').innerHTML=`<h2>${id?'Topdan məhsulu redaktə et':'Topdan məhsul əlavə et'}</h2>
+   <div class="chk"><label><input type="checkbox" name="lighter" ${isL?'checked':''}> <b>Alışqan</b></label><br><small>Seçilsə, məhsul "Alışqan" səhifəsinə düşür. Mexanizm, Forma, Ölçü (Həcm) və Qayış / rəng (Çalar) bağlanır və müştəri onları görmür.</small></div>
    <div class="two"><label>Brend<input name="brand" required value="${esc(w.brand)}"></label><label>Model<input name="model" required value="${esc(w.model)}"></label>
    <label>Topdan qiymət ₼<input name="price" type="number" min="0" step="any" required value="${w.price}"></label><label>Mexanizm${mechSel(w)}</label>
    <label>Forma (çəkilmiş şəkil üçün)<select name="kind">${['watch','chrono','dress','smart','band'].map(m=>`<option value="${m}" ${w.kind===m?'selected':''}>${tr(m)}</option>`).join('')}</select></label>
@@ -408,14 +410,19 @@ function wsEdit(id){
    <div class="two"><label>Ölçü<input name="size" value="${esc(w.size)}" placeholder="40 mm"></label><label>Qayış / rəng<input name="shade" value="${esc(w.shade)}" placeholder="Qara dəri"></label><label>Mənşə<input name="origin" value="${esc(w.origin)}" placeholder="Yaponiya"></label></div>
    <div class="chk"><b>Topdan albomlar</b><br>${W.albums.map(a=>`<label><input type="checkbox" name="tag" value="${esc(a.key)}" ${(w.tags||[]).includes(a.key)?'checked':''}> ${esc(wsN(a))}</label>`).join('')||'<small>Əvvəlcə "Topdan albomlar" bölməsində albom yaradın.</small>'}</div>
    <p class="acts"><button class="b" value="save">Saxla</button><button class="b s r" value="cancel" formnovalidate>Ləğv et</button></p>`;
+  const ltTgl=()=>{const on=$('#wf').elements.lighter.checked;
+    ['mech','kind','size','shade'].forEach(n=>{const el=$('#wf').elements[n];if(!el)return;el.disabled=on;const lb=el.closest('label');if(lb)lb.style.opacity=on?.4:1;});
+    document.querySelectorAll('#wf input[name="tag"]').forEach(el=>{el.disabled=on;});};
+  $('#wf').elements.lighter.onchange=ltTgl;ltTgl();
   let photo=w.img&&w.img.startsWith('data:')?w.img:'',busy=null;
   $('#wsfile').onchange=e=>{const f=e.target.files[0];if(!f)return;busy=readImg(f,800,.82).then(d=>{photo=d;}).catch(()=>alert('Bu şəkli oxumaq mümkün olmadı.'));};
   $('#wf').onsubmit=async e=>{
     if(e.submitter&&e.submitter.value!=='save')return;
     if(busy)await busy;
     const f=new FormData($('#wf')),o=id?w:{id:Math.max(0,...WSD().products.map(x=>x.id))+1,ws:1};
-    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),mech:f.get('mech')||'',kind:f.get('kind'),color:f.get('color'),
-      img:f.get('img').trim()||photo,desc:f.get('desc').trim(),size:f.get('size').trim(),shade:f.get('shade').trim(),origin:f.get('origin').trim(),tags:f.getAll('tag'),ws:1});
+    const lt=f.get('lighter')!==null;
+    Object.assign(o,{brand:f.get('brand').trim(),model:f.get('model').trim(),price:+f.get('price'),mech:lt?'':(f.get('mech')||''),kind:lt?'lighter':(f.get('kind')||'watch'),color:f.get('color'),
+      img:f.get('img').trim()||photo,desc:f.get('desc').trim(),size:lt?'':(f.get('size')||'').trim(),shade:lt?'':(f.get('shade')||'').trim(),origin:f.get('origin').trim(),tags:lt?[]:f.getAll('tag'),ws:1});
     if(!id)WSD().products.push(o);DB.save();renderWS();};
   $('#dlg').showModal();
 }

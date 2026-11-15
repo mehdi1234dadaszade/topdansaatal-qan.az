@@ -28,7 +28,8 @@ const CT=()=>{const C=DB.data.settings.contact||{},ph=C.phone||'';
  return {ph,tel:ph.replace(/[^\d+]/g,''),ad:C.address||'',mp:C.maps||'',
   ig:C.instagram||'',tk:C.tiktok||'',wa:C.whatsapp||'',yt:C.youtube||'',q:C.map||''};};
 const card=w=>`<a class="card" href="product.html?id=${w.id}">${imgTag(w,esc(w.brand+' '+w.model))}<div class="ci"><span>${esc(w.brand)} ${esc(w.model)}</span>${priceHTML(w)}</div><button class="add" onclick="addToCart(${w.id},event)">${t('addToCart')}</button></a>`;
-const inAlbum=(w,k)=>k==='all'||(w.tags||[]).includes(k);
+const isLt=w=>!!w&&w.kind==='lighter';   /* lighter (alışqan) products live on their own page */
+const inAlbum=(w,k)=>!isLt(w)&&(k==='all'||(w.tags||[]).includes(k));
 
 /* header: hide the centered text if there is no room for it (never overlaps logo or buttons) */
 function fitHexp(){const e=document.querySelector('.hexp');if(!e)return;e.style.display='';
@@ -144,10 +145,9 @@ const pages={
     :`<video autoplay muted loop playsinline preload="auto" poster="${esc(imgSrc(Z.poster||'images/hero-poster-2.jpg'))}"><source src="${esc(imgSrc(Z.video||'videos/hero.mp4'))}" onerror="this.closest('.hero').classList.add('novid')"></video>`;
   $('#main').innerHTML=`<section class="hero vh"><div class="vbg">${media}</div><div class="vov" style="--ov:${ov/100}"></div><div class="vglow"></div>
    <div class="hin2"><h1>${esc(H.title||t('wsHeroT'))}</h1><p>${esc(H.sub||t('wsHeroS'))}</p>
-   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a></div></div>
+   <div class="hbtns"><a class="btn" href="products.html">${t('wsShop')}</a> <a class="btn ghost" href="lighters.html">${t('lighterBtn')}</a></div></div>
    <div class="hfoot"><div class="soc">${socials()}</div><a class="hcontact" href="contact.html">${t('contact')}</a></div>
    <a class="scrolld" href="#after" aria-label="${esc(t('scrollDown'))}"><span>${t('scrollDown')}</span><i></i></a></section><span id="after"></span>
-   ${brands.length?`<div class="strip">${brands.map(b=>`<span>${esc(b)}</span>`).join('')}</div>`:''}
    ${A.length?`<section class="wrap">${albumsInner('h2')}</section>`:''}
    <section class="wrap"><div class="head"><h2>${t('whyT')} · ${esc(NAME())}</h2></div><div class="why"><div><div class="ico">${ic('sparkle')}</div><h3>${t('w1')}</h3><p>${t('w1d')}</p></div><div><div class="ico">${ic('tag')}</div><h3>${t('w2')}</h3><p>${t('w2d')}</p></div><div><div class="ico">${ic('pin')}</div><h3>${t('w3')}</h3><p>${t('w3d')}</p></div></div></section>
    <section class="cta"><h2>${t('w3')}</h2><p>${t('w3d')}</p><a class="btn" href="contact.html">${t('contact')}</a></section>`;
@@ -205,22 +205,34 @@ const pages={
    <select id="sort"><option value="">${t('price')}</option><option value="lo">${t('sortLow')}</option><option value="hi">${t('sortHigh')}</option></select></div><p class="cnt" id="cnt"></p><div id="list" class="grid"></div></section>`;
   $('#sort').onchange=e=>{sort=e.target.value;draw();};$('#qs').oninput=e=>{qs=e.target.value.trim().toLowerCase();draw();};draw();
  },
+ lighters(){
+  let sort='',qs='';
+  const draw=()=>{let l=PRODS().filter(w=>isLt(w)&&(w.brand+' '+w.model).toLowerCase().includes(qs));
+   if(sort==='lo')l.sort((a,b)=>a.price-b.price);if(sort==='hi')l.sort((a,b)=>b.price-a.price);
+   $('#list').innerHTML=l.length?l.map(card).join(''):`<p>${t('none')}</p>`;$('#cnt').textContent=l.length+' '+t('count');};
+  document.title=t('lighters')+' · '+NAME();
+  $('#main').innerHTML=`<section class="wrap"><div class="head"><h1>${t('lighters')}</h1></div><div class="tools"><input id="qs" type="search" placeholder="${esc(t('search'))}" aria-label="${esc(t('search'))}">
+   <select id="sort"><option value="">${t('price')}</option><option value="lo">${t('sortLow')}</option><option value="hi">${t('sortHigh')}</option></select></div><p class="cnt" id="cnt"></p><div id="list" class="grid"></div>
+   <p style="text-align:center;margin-top:30px"><a class="btn ghost" href="index.html">${t('home')}</a></p></section>`;
+  $('#sort').onchange=e=>{sort=e.target.value;draw();};$('#qs').oninput=e=>{qs=e.target.value.trim().toLowerCase();draw();};draw();
+ },
  product(){
   const id=+new URLSearchParams(location.search).get('id'),w=PRODS().find(x=>x.id===id);
   if(!w){$('#main').innerHTML=`<section class="wrap"><p>${t('notFound')}</p><a class="btn" href="products.html">${t('back')}</a></section>`;return;}
   const row=(a,b)=>`<tr><th>${a}</th><td>${b}</td></tr>`,c=CT(),Z=DS(),
    bg=imgSrc(Z.productBg||'images/product-bg.png').replace(/'/g,'%27'),dim=Math.min(85,Math.max(0,Z.pbOverlay==null||Z.pbOverlay===''?25:+Z.pbOverlay))/100,
-   rel=PRODS().filter(x=>x.id!==w.id&&(x.tags||[]).some(g=>(w.tags||[]).includes(g))).slice(0,4);
+   LT=isLt(w),LH=LT?'lighters.html':'products.html',
+   rel=LT?PRODS().filter(x=>x.id!==w.id&&isLt(x)).slice(0,4):PRODS().filter(x=>x.id!==w.id&&!isLt(x)&&(x.tags||[]).some(g=>(w.tags||[]).includes(g))).slice(0,4);
   document.title=w.brand+' '+w.model+' · '+NAME();
   const _bi=new Image();_bi.onload=()=>{const st=$('.pstage');if(st&&_bi.naturalWidth)st.style.setProperty('--par',_bi.naturalWidth+'/'+_bi.naturalHeight);};_bi.src=imgSrc(Z.productBg||'images/product-bg.png');
-  $('#main').innerHTML=`<section class="pstage" style="--pbg:url('${bg}');--pdim:${dim}"><div class="pst-in"><div class="crumbs"><a href="index.html">${t('home')}</a> / <a href="products.html">${t('products')}</a> / ${esc(w.brand)} ${esc(w.model)}</div>
+  $('#main').innerHTML=`<section class="pstage" style="--pbg:url('${bg}');--pdim:${dim}"><div class="pst-in"><div class="crumbs"><a href="index.html">${t('home')}</a> / <a href="${LH}">${t(LT?'lighters':'products')}</a> / ${esc(w.brand)} ${esc(w.model)}</div>
    <div class="pimg"><img src="${esc(photo(w))}" alt="${esc(w.brand+' '+w.model)}" onerror="this.onerror=null;this.src=this.dataset.f;this.classList.add('bare')" data-f="${productImg({...w,img:'',bare:1})}"></div>
    <div class="ptitle"><h1>${esc(w.brand)} ${esc(w.model)}</h1><p class="big">${priceHTML(w,1)}</p>
-   ${w.mech?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}</div></div>
+   ${w.mech&&!LT?`<p class="mech">${t('mech')}: <b>${esc(w.mech)}</b></p>`:''}</div></div>
    <a class="scrolld" href="#pdet" aria-label="${esc(t('details'))}"><span>${t('details')}</span><i></i></a></section>
    <section class="wrap" id="pdet"><div class="pdet"><div class="head"><h2>${t('details')}</h2></div><p class="pdesc">${esc(w.desc)||t('desc')}</p>
-   <table>${row(t('brand'),esc(w.brand))}${row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${w.size?row(t('size'),esc(w.size)):''}${w.shade?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${w.mech?row(t('mech'),esc(w.mech)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
-   <div class="pbtns"><button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> ${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="products.html">${t('back')}</a></div></div>
+   <table>${row(t('brand'),esc(w.brand))}${LT?'':row(t('category'),esc(ALBS().filter(a=>(w.tags||[]).includes(a.key)).map(an).join(', ')))}${w.size&&!LT?row(t('size'),esc(w.size)):''}${w.shade&&!LT?row(t('shade'),esc(w.shade)):''}${w.origin?row(t('origin'),esc(w.origin)):''}${w.mech&&!LT?row(t('mech'),esc(w.mech)):''}${row(t(WS?'wsPrice':'price'),priceHTML(w,1))}</table>
+   <div class="pbtns"><button class="btn" onclick="addToCart(${w.id})">${t('addToCart')}</button> ${c.ph?`<a class="btn ghost" href="tel:${esc(c.tel)}">${t('callUs')}</a> `:''}<a class="btn ghost" href="${LH}">${t('back')}</a></div></div>
    ${rel.length?`<div class="head" style="margin-top:56px"><h2>${t('related')}</h2></div><div class="grid">${rel.map(card).join('')}</div>`:''}</section>`;
  },
  contact(){
@@ -276,6 +288,7 @@ async function geoGate(){
     if(page==='products'){const k=q.get('album')||'all';await DB.need(k==='all'?{all:true}:{albums:[k],ids});}
     else if(page==='product')await DB.need({ids:[+q.get('id')].concat(ids)});
     else if(page==='account')await DB.need({all:true});
+    else if(page==='lighters')await DB.need({albums:['_alisqan'],ids});
     else await DB.need({ids});}catch(e){}}
   const boot=()=>{chrome(page); fab(); if(window.tkWaBanner)tkWaBanner();
    (pages[page]||EXTRA_PAGES[page]||(()=>{}))();fx();};

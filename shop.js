@@ -158,6 +158,7 @@ function tkDonePage(o){fab();
 /* ---------- after the order: customer sends product names + photos to the admin's WhatsApp ---------- */
 Object.assign(T.en,{waOpen:'Open the order'});Object.assign(T.az,{waOpen:'Sifarişə bax'});
 Object.assign(T.en,{mech:'Movement'});Object.assign(T.az,{mech:'Mexanizm'});Object.assign(T.ru,{mech:'Механизм'});Object.assign(T.tr,{mech:'Mekanizma'});
+Object.assign(T.en,{lighters:'Lighters',lighterBtn:'Choose lighters'});Object.assign(T.az,{lighters:'Alışqanlar',lighterBtn:'Alışqan seçimi'});Object.assign(T.ru,{lighters:'Зажигалки',lighterBtn:'Выбор зажигалок'});Object.assign(T.tr,{lighters:'Çakmaklar',lighterBtn:'Çakmak seçimi'});
 /* the WhatsApp message holds only the customer + ONE link that opens this order in the admin page (admin/index.html#order=PHONE_ID) */
 function tkOrderLink(o){return new URL('admin/index.html#order='+o.phone+'_'+o.id,ROOT).href;}
 function tkWaText(o){const m=[],ln=(a,b)=>b?a+': '+b:a;
