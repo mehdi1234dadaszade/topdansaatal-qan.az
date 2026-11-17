@@ -81,7 +81,7 @@ function albumCard(a){
 const BIGS=()=>((WS?(DB.data.wholesale||{}).bigAlbums:DB.data.bigAlbums)||[]);
 const bigItems=b=>(b.items||[]).map(k=>ALBS().find(a=>a.key===k)).filter(Boolean);
 /* hero buttons: the first two big albums (falls back to the old button when there are none) */
-function bigBtns(fb){const B=BIGS().slice(0,2),L=(!WS&&hasL())?` <a class="btn ghost" href="lighters.html">${t('lighters')}</a>`:'';if(!B.length)return fb+L;return B.map(b=>`<a class="btn ghost" href="albums.html?big=${encodeURIComponent(b.key)}">${esc(an(b))}</a>`).join(' ')+L;}
+function bigBtns(fb){const B=BIGS().slice(0,2),L=(!WS)?` <a class="btn ghost" href="lighters.html">${t('lighters')}</a>`:'';if(!B.length)return fb+L;return B.map(b=>`<a class="btn ghost" href="albums.html?big=${encodeURIComponent(b.key)}">${esc(an(b))}</a>`).join(' ')+L;}
 function bigFrame(title,list,href){
   return `<div class="bframe"><div class="head"><h2>${href?`<a href="${href}">${esc(title)}</a>`:esc(title)}</h2></div><div class="bgrid3">${list.map(albumCard).join('')}</div></div>`;
 }
